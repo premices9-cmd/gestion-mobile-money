@@ -143,6 +143,7 @@ let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0}
 let operators = JSON.parse(localStorage.getItem("operators")) || []
 let types = JSON.parse(localStorage.getItem("types")) || []
 let transactions = JSON.parse(localStorage.getItem("transactions")) || []
+  localStorage.setItem("adminPassword", "admin123");
 let adminPassword = localStorage.getItem("adminPassword") || "admin123"
 let exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500
 let loggedIn = localStorage.getItem("loggedIn") || "false"
