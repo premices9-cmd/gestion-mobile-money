@@ -22,14 +22,12 @@ hr {margin:25px 0}
 
 <div class="container">
 
-<!-- 🔐 LOGIN -->
 <div id="loginSection">
 <h2>Connexion Admin</h2>
 <input type="password" id="adminPassword" placeholder="Mot de passe">
 <button onclick="login()">Se connecter</button>
 </div>
 
-<!-- 🔓 MAIN APP -->
 <div id="appSection" class="hidden">
 
 <button onclick="logout()">Déconnexion</button>
@@ -138,121 +136,120 @@ hr {margin:25px 0}
 </div>
 
 <script>
-  
-let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0}
-let operators = JSON.parse(localStorage.getItem("operators")) || []
-let types = JSON.parse(localStorage.getItem("types")) || []
-let transactions = JSON.parse(localStorage.getItem("transactions")) || []
+
+let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0};
+let operators = JSON.parse(localStorage.getItem("operators")) || [];
+let types = JSON.parse(localStorage.getItem("types")) || [];
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 let adminPassword = localStorage.getItem("adminPassword") || "admin123";
-let exchangeRate = perseFloat(localStorage.getItem("exchangeRate")) || 2500
-let loggedIn = localStorage.getItem("loggedIn") || "false"
+let exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500;
+let loggedIn = localStorage.getItem("loggedIn") || "false";
 
 function saveAll(){
-localStorage.setItem("caisse",JSON.stringify(caisse))
-localStorage.setItem("operators",JSON.stringify(operators))
-localStorage.setItem("types",JSON.stringify(types))
-localStorage.setItem("transactions",JSON.stringify(transactions))
-localStorage.spassPassword",adminPassword)
-localStorage.setItem("exchangeRate",exchangeRate)
-localStorage.setItem("loggedIn",loggedIn)
+localStorage.setItem("caisse",JSON.stringify(caisse));
+localStorage.setItem("operators",JSON.stringify(operators));
+localStorage.setItem("types",JSON.stringify(types));
+localStorage.setItem("transactions",JSON.stringify(transactions));
+localStorage.setItem("adminPassword", adminPassword);
+localStorage.setItem("exchangeRate",exchangeRate);
+localStorage.setItem("loggedIn",loggedIn);
 }
 
 function login(){
-let pass=document.getElementById("adminPassword").value
+let pass=document.getElementById("adminPassword").value;
 if(pass===adminPassword){
-loggedIn="true"
-saveAll()
-showApp()
+loggedIn="true";
+saveAll();
+showApp();
 }else{
-alert("Mot de passe incorrect")
+alert("Mot de passe incorrect");
 }
 }
 
 function logout(){
-loggedIn="false"
-saveAll()
-location.reload()
+loggedIn="false";
+saveAll();
+location.reload();
 }
 
 function showApp(){
 if(loggedIn==="true"){
-document.getElementById("loginSection").classList.add("hidden")
-document.getElementById("appSection").classList.remove("hidden")
-display()
+document.getElementById("loginSection").classList.add("hidden");
+document.getElementById("appSection").classList.remove("hidden");
+display();
 }
 }
 
 function changePassword(){
-let newPass=document.getElementById("newPassword").value
-if(!newPass)return
-adminPassword=newPass
-saveAll()
-alert("Mot de passe modifié")
+let newPass=document.getElementById("newPassword").value;
+if(!newPass)return;
+adminPassword=newPass;
+saveAll();
+alert("Mot de passe modifié");
 }
 
 function setRate(){
-let rate=parseFloat(document.getElementById("exchangeRate").value)
+let rate=parseFloat(document.getElementById("exchangeRate").value);
 if(rate>0){
-exchangeRate=rate
-saveAll()
-alert("Taux mis à jour")
+exchangeRate=rate;
+saveAll();
+alert("Taux mis à jour");
 }
 }
 
 function setInitialCaisse(){
-caisse.USD=parseFloat(document.getElementById("initUSD").value)||0
-caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0
-saveAll()
-display()
+caisse.USD=parseFloat(document.getElementById("initUSD").value)||0;
+caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0;
+saveAll();
+display();
 }
 
 function addOperator(){
-let name=document.getElementById("newOperator").value
-let usd=parseFloat(document.getElementById("opInitUSD").value)||0
-let cdf=parseFloat(document.getElementById("opInitCDF").value)||0
-if(!name)return
-operators.push({name,USD:usd,CDF:cdf})
-saveAll()
-display()
+let name=document.getElementById("newOperator").value;
+let usd=parseFloat(document.getElementById("opInitUSD").value)||0;
+let cdf=parseFloat(document.getElementById("opInitCDF").value)||0;
+if(!name)return;
+operators.push({name,USD:usd,CDF:cdf});
+saveAll();
+display();
 }
 
 function deleteOperator(i){
-operators.splice(i,1)
-saveAll()
-display()
+operators.splice(i,1);
+saveAll();
+display();
 }
 
 function addType(){
-let name=document.getElementById("newTypeName").value
-let impactCaisse=parseInt(document.getElementById("impactCaisse").value)
-let impactOperateur=parseInt(document.getElementById("impactOperateur").value)
-if(!name)return
-types.push({name,impactCaisse,impactOperateur})
-saveAll()
-display()
+let name=document.getElementById("newTypeName").value;
+let impactCaisse=parseInt(document.getElementById("impactCaisse").value);
+let impactOperateur=parseInt(document.getElementById("impactOperateur").value);
+if(!name)return;
+types.push({name,impactCaisse,impactOperateur});
+saveAll();
+display();
 }
 
 function deleteType(i){
-types.splice(i,1)
-saveAll()
-display()
+types.splice(i,1);
+saveAll();
+display();
 }
 
 function addTransaction(){
+let opIndex=document.getElementById("operatorSelect").value;
+let typeIndex=document.getElementById("typeSelect").value;
+let currency=document.getElementById("currency").value;
+let amount=parseFloat(document.getElementById("amount").value);
+let motif=document.getElementById("motif").value;
 
-let opIndex=document.getElementById("operatorSelect").value
-let typeIndex=document.getElementById("typeSelect").value
-let currency=document.getElementById("currency").value
-let amount=parseFloat(document.getElementById("amount").value)
-let motif=document.getElementById("motif").value
+if(amount<=0)return;
 
-if(amount<=0)return
+let operator=operators[opIndex];
+let type=types[typeIndex];
 
-let operator=operators[opIndex]
-let type=types[typeIndex]
-
-caisse[currency]+= amount * type.impactCaisse
-operator[currency]+= amount * type.impactOperateur
+caisse[currency]+= amount * type.impactCaisse;
+operator[currency]+= amount * type.impactOperateur;
 
 transactions.push({
 date:new Date(),
@@ -261,92 +258,73 @@ type:type.name,
 currency,
 amount,
 motif
-})
+});
 
-saveAll()
-display()
+saveAll();
+display();
 }
 
 function exchange(){
-
-let direction=document.getElementById("exchangeDirection").value
-let amount=parseFloat(document.getElementById("exchangeAmount").value)
-if(amount<=0)return
+let direction=document.getElementById("exchangeDirection").value;
+let amount=parseFloat(document.getElementById("exchangeAmount").value);
+if(amount<=0)return;
 
 if(direction==="USDtoCDF"){
-caisse.USD-=amount
-caisse.CDF+=amount*exchangeRate
-transactions.push({
-date:new Date(),
-operator:"Caisse",
-type:"Échange USD→CDF",
-currency:"USD",
-amount,
-motif:"Échange automatique"
-})
+caisse.USD-=amount;
+caisse.CDF+=amount*exchangeRate;
 }
 
 if(direction==="CDFtoUSD"){
-caisse.CDF-=amount
-caisse.USD+=amount/exchangeRate
-transactions.push({
-date:new Date(),
-operator:"Caisse",
-type:"Échange CDF→USD",
-currency:"CDF",
-amount,
-motif:"Échange automatique"
-})
+caisse.CDF-=amount;
+caisse.USD+=amount/exchangeRate;
 }
 
-saveAll()
-display()
+saveAll();
+display();
 }
 
 function filterHistory(){
-
-let start=new Date(document.getElementById("startDate").value)
-let end=new Date(document.getElementById("endDate").value)
+let start=new Date(document.getElementById("startDate").value);
+let end=new Date(document.getElementById("endDate").value);
 
 let filtered=transactions.filter(t=>{
-let d=new Date(t.date)
-return d>=start && d<=end
-})
+let d=new Date(t.date);
+return d>=start && d<=end;
+});
 
-displayHistory(filtered)
+displayHistory(filtered);
 }
 
 function display(){
+document.getElementById("caisseUSD").innerText=caisse.USD;
+document.getElementById("caisseCDF").innerText=caisse.CDF;
 
-document.getElementById("caisseUSD").innerText=caisse.USD
-document.getElementById("caisseCDF").innerText=caisse.CDF
-
-let opHTML=""
-let opSelect=""
+let opHTML="";
+let opSelect="";
 operators.forEach((op,i)=>{
 opHTML+=`<div class="card">${op.name} | USD:${op.USD} | CDF:${op.CDF}
-<button onclick="deleteOperator(${i})">X</button></div>`
-opSelect+=`<option value="${i}">${op.name}</option>`
-})
-document.getElementById("operatorBalances").innerHTML=opHTML
-document.getElementById("operatorList").innerHTML=opHTML
-document.getElementById("operatorSelect").innerHTML=opSelect
+<button onclick="deleteOperator(${i})">X</button></div>`;
+opSelect+=`<option value="${i}">${op.name}</option>`;
+});
+document.getElementById("operatorBalances").innerHTML=opHTML;
+document.getElementById("operatorList").innerHTML=opHTML;
+document.getElementById("operatorSelect").innerHTML=opSelect;
 
-let typeHTML=""
-let typeSelect=""
+let typeHTML="";
+let typeSelect="";
 types.forEach((t,i)=>{
 typeHTML+=`<div class="card">${t.name}
-<button onclick="deleteType(${i})">X</button></div>`
-typeSelect+=`<option value="${i}">${t.name}</option>`
-})
-document.getElementById("typeList").innerHTML=typeHTML
-document.getElementById("typeSelect").innerHTML=typeSelect
+<button onclick="deleteType(${i})">X</button></div>`;
+typeSelect+=`<option value="${i}">${t.name}</option>`;
+});
+document.getElementById("typeList").innerHTML=typeHTML;
+document.getElementById("typeSelect").innerHTML=typeSelect;
 
-displayHistory(transactions)
+displayHistory(transactions);
 }
 
 function displayHistory(list){
-let historyHTML=""
+let historyHTML="";
 list.slice().reverse().forEach(t=>{
 historyHTML+=`<div class="card">
 ${new Date(t.date).toLocaleString()} |
@@ -354,40 +332,14 @@ ${t.operator} |
 ${t.type} |
 ${t.amount} ${t.currency}
 <br>Motif: ${t.motif}
-</div>`
-})
-document.getElementById("history").innerHTML=historyHTML
+</div>`;
+});
+document.getElementById("history").innerHTML=historyHTML;
 }
 
-showApp()
-
-  </script>
- 
-  <script type="module">
-
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs",
-  authDomain: "mka-mobile-money.firebaseapp.com",
-  databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com",
-  projectId: "mka-mobile-money",
-  storageBucket: "mka-mobile-money.firebasestorage.app",
-  messagingSenderId: "787998930063",
-  appId: "1:787998930063:web:95152b3105e0ed8dc3ecfa",
-  measurementId: "G-9Y0ESBEERW"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+showApp();
 
 </script>
-  
+
 </body>
-  </html>
+</html>
