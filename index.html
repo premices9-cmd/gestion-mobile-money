@@ -144,7 +144,7 @@ let operators = JSON.parse(localStorage.getItem("operators")) || []
 let types = JSON.parse(localStorage.getItem("types")) || []
 let transactions = JSON.parse(localStorage.getItem("transactions")) || []
 let adminPassword = localStorage.getItem("adminPassword") || "admin123";
-scriptiptiptwAppwApp exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500
+let exchangeRate = perseFloat(localStorage.getItem("exchangeRate")) || 2500
 let loggedIn = localStorage.getItem("loggedIn") || "false"
 
 function saveAll(){
@@ -152,7 +152,7 @@ localStorage.setItem("caisse",JSON.stringify(caisse))
 localStorage.setItem("operators",JSON.stringify(operators))
 localStorage.setItem("types",JSON.stringify(types))
 localStorage.setItem("transactions",JSON.stringify(transactions))
-localStorage.setItem("adminPassword",adminPassword)
+localStorage.spassPassword",adminPassword)
 localStorage.setItem("exchangeRate",exchangeRate)
 localStorage.setItem("loggedIn",loggedIn)
 }
