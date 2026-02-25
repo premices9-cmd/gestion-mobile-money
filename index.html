@@ -138,7 +138,9 @@ hr {margin:25px 0}
 </div>
 
 <script>
-
+  
+localStorage.clear();
+  
 let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0}
 let operators = JSON.parse(localStorage.getItem("operators")) || []
 let types = JSON.parse(localStorage.getItem("types")) || []
