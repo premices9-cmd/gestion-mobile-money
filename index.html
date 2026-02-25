@@ -24,7 +24,7 @@ hr {margin:25px 0}
 
 <div id="loginSection">
 <h2>Connexion</h2>
-<input type="password" id="password" placeholder="Entrer PIN">
+<input type="password" id="pinInput" placeholder="Entrer PIN">
 <button onclick="login()">Se connecter</button>
 </div>
 
@@ -58,9 +58,34 @@ hr {margin:25px 0}
 
 <hr>
 
-<h2>ADMIN - Soldes Initiaux & Création</h2>
+<h2>Échange USD ⇄ CDF</h2>
+
+<select id="exchangeDirection">
+<option value="USDtoCDF">USD → CDF</option>
+<option value="CDFtoUSD">CDF → USD</option>
+</select>
+
+<input type="number" id="exchangeAmount" placeholder="Montant">
+<button onclick="exchange()">Échanger</button>
+
+<hr>
+
+<h2>Filtrer Historique</h2>
+<input type="date" id="startDate">
+<input type="date" id="endDate">
+<button onclick="filterHistory()">Filtrer</button>
+<button onclick="display()">Réinitialiser</button>
+
+<hr>
+
+<h2>Historique</h2>
+<div id="history"></div>
+
+<hr>
 
 <div id="adminSection">
+
+<h2>ADMIN - Soldes Initiaux</h2>
 
 <h3>Caisse</h3>
 <input type="number" id="initUSD" placeholder="USD">
@@ -69,173 +94,20 @@ hr {margin:25px 0}
 
 <hr>
 
-<h3>Ajouter Opérateur</h3>
+<h3>Opérateurs</h3>
 <input type="text" id="newOperator" placeholder="Nom opérateur">
 <input type="number" id="opInitUSD" placeholder="USD">
 <input type="number" id="opInitCDF" placeholder="CDF">
-<input type="number" id="opInitStock" placeholder="Stock">
+<input type="number" id="opStock" placeholder="Stock">
 <button onclick="addOperator()">Ajouter</button>
 
 <div id="operatorList"></div>
 
-</div>
-
 <hr>
 
-<h2>Historique</h2>
-<div id="history"></div>
-
-</div>
-</div>
-
-<script>
-
-let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0};
-let operators = JSON.parse(localStorage.getItem("operators")) || [];
-let types = JSON.parse(localStorage.getItem("types")) || [];
-let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-
-const ADMIN_PIN = "admin123";
-const EMP_PIN = "emp123";
-
-let currentRole = localStorage.getItem("role") || "";
-
-function saveAll(){
-localStorage.setItem("caisse",JSON.stringify(caisse));
-localStorage.setItem("operators",JSON.stringify(operators));
-localStorage.setItem("types",JSON.stringify(types));
-localStorage.setItem("transactions",JSON.stringify(transactions));
-localStorage.setItem("role",currentRole);
-}
-
-function login(){
-let pass=document.getElementById("password").value;
-
-if(pass===ADMIN_PIN){
-currentRole="admin";
-showApp();
-}
-else if(pass===EMP_PIN){
-currentRole="employee";
-showApp();
-}
-else{
-alert("PIN incorrect");
-}
-saveAll();
-}
-
-function logout(){
-localStorage.removeItem("role");
-location.reload();
-}
-
-function showApp(){
-if(currentRole){
-document.getElementById("loginSection").classList.add("hidden");
-document.getElementById("appSection").classList.remove("hidden");
-
-if(currentRole==="employee"){
-document.getElementById("adminSection").style.display="none";
-}
-
-display();
-}
-}
-
-function setInitialCaisse(){
-if(currentRole!=="admin") return;
-caisse.USD=parseFloat(document.getElementById("initUSD").value)||0;
-caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0;
-saveAll();
-display();
-}
-
-function addOperator(){
-if(currentRole!=="admin") return;
-
-let name=document.getElementById("newOperator").value;
-let usd=parseFloat(document.getElementById("opInitUSD").value)||0;
-let cdf=parseFloat(document.getElementById("opInitCDF").value)||0;
-let stock=parseFloat(document.getElementById("opInitStock").value)||0;
-
-if(!name)return;
-
-operators.push({name,USD:usd,CDF:cdf,stock:stock});
-saveAll();
-display();
-}
-
-function deleteOperator(i){
-if(currentRole!=="admin") return;
-operators.splice(i,1);
-saveAll();
-display();
-}
-
-function addTransaction(){
-let opIndex=document.getElementById("operatorSelect").value;
-let currency=document.getElementById("currency").value;
-let amount=parseFloat(document.getElementById("amount").value);
-let motif=document.getElementById("motif").value;
-
-if(amount<=0)return;
-
-let operator=operators[opIndex];
-
-operator[currency]+=amount;
-
-transactions.push({
-date:new Date(),
-operator:operator.name,
-currency,
-amount,
-motif
-});
-
-saveAll();
-display();
-}
-
-function display(){
-document.getElementById("caisseUSD").innerText=caisse.USD;
-document.getElementById("caisseCDF").innerText=caisse.CDF;
-
-let opHTML="";
-let opSelect="";
-operators.forEach((op,i)=>{
-opHTML+=`<div class="card">
-${op.name} | USD:${op.USD} | CDF:${op.CDF} | STOCK:${op.stock||0}
-${currentRole==="admin" ? `<button onclick="deleteOperator(${i})">X</button>`:""}
-</div>`;
-opSelect+=`<option value="${i}">${op.name}</option>`;
-});
-document.getElementById("operatorBalances").innerHTML=opHTML;
-document.getElementById("operatorList").innerHTML=opHTML;
-document.getElementById("operatorSelect").innerHTML=opSelect;
-
-displayHistory(transactions);
-}
-
-function displayHistory(list){
-let historyHTML="";
-list.slice().reverse().forEach(t=>{
-historyHTML+=`<div class="card">
-${new Date(t.date).toLocaleString()} |
-${t.operator} |
-${t.amount} ${t.currency}
-<br>Motif: ${t.motif}
-</div>`;
-});
-document.getElementById("history").innerHTML=historyHTML;
-}
-
-showApp();
-
-</script>
-
-</body>
-</html>￼Enter<!DOCTYPE html>
+<h3>Types d'opération</h3>
+<input type="text" id="newTypeName" placeholder="Nom type">
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -261,7 +133,7 @@ hr {margin:25px 0}
 
 <div id="loginSection">
 <h2>Connexion</h2>
-<input type="password" id="password" placeholder="Entrer PIN">
+<input type="password" id="pinInput" placeholder="Entrer PIN">
 <button onclick="login()">Se connecter</button>
 </div>
 
@@ -282,7 +154,8 @@ hr {margin:25px 0}
 
 <select id="operatorSelect"></select>
 <select id="typeSelect"></select>
-ct id="currency">
+
+<select id="currency">
 <option value="USD">USD</option>
 <option value="CDF">CDF</option>
 </select>
@@ -294,9 +167,34 @@ ct id="currency">
 
 <hr>
 
-<h2>ADMIN - Soldes Initiaux & Création</h2>
+<h2>Échange USD ⇄ CDF</h2>
+
+<select id="exchangeDirection">
+<option value="USDtoCDF">USD → CDF</option>
+<option value="CDFtoUSD">CDF → USD</option>
+</select>
+
+<input type="number" id="exchangeAmount" placeholder="Montant">
+<button onclick="exchange()">Échanger</button>
+
+<hr>
+
+<h2>Filtrer Historique</h2>
+<input type="date" id="startDate">
+<input type="date" id="endDate">
+<button onclick="filterHistory()">Filtrer</button>
+<button onclick="display()">Réinitialiser</button>
+
+<hr>
+
+<h2>Historique</h2>
+<div id="history"></div>
+
+<hr>
 
 <div id="adminSection">
+
+<h2>ADMIN - Soldes Initiaux</h2>
 
 <h3>Caisse</h3>
 <input type="number" id="initUSD" placeholder="USD">
@@ -305,21 +203,53 @@ ct id="currency">
 
 <hr>
 
-<h3>Ajouter Opérateur</h3>
+<h3>Opérateurs</h3>
 <input type="text" id="newOperator" placeholder="Nom opérateur">
 <input type="number" id="opInitUSD" placeholder="USD">
 <input type="number" id="opInitCDF" placeholder="CDF">
-<input type="number" id="opInitStock" placeholder="Stock">
+<input type="number" id="opStock" placeholder="Stock">
 <button onclick="addOperator()">Ajouter</button>
 
 <div id="operatorList"></div>
 
-</div>
+<hr>
+
+<h3>Types d'opération</h3>
+<input type="text" id="newTypeName" placeholder="Nom type">
+
+<select id="impactCaisse">
+<option value="1">Caisse +</option>
+<option value="-1">Caisse -</option>
+<option value="0">Pas caisse</option>
+</select>
+
+<select id="impactOperateur">
+<option value="1">Opérateur +</option>
+<option value="-1">Opérateur -</option>
+<option value="0">Pas opérateur</option>
+</select>
+
+<button onclick="addType()">Ajouter Type</button>
+<div id="typeList"></div>
 
 <hr>
 
-<h2>Historique</h2>
-<div id="history"></div>
+<h3>Paramètres</h3>
+
+<input type="password" id="newAdminPin" placeholder="Nouveau PIN Admin">
+<button onclick="changeAdminPin()">Changer PIN Admin</button>
+
+<br>
+
+<input type="password" id="newEmpPin" placeholder="Nouveau PIN Employé">
+<button onclick="changeEmpPin()">Changer PIN Employé</button>
+
+<br>
+
+<input type="number" id="exchangeRate" placeholder="Taux USD → CDF">
+<button onclick="setRate()">Définir Taux</button>
+
+</div>
 
 </div>
 </div>
@@ -331,48 +261,433 @@ let operators = JSON.parse(localStorage.getItem("operators")) || [];
 let types = JSON.parse(localStorage.getItem("types")) || [];
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
-const ADMIN_PIN = "admin123";
-const EMP_PIN = "emp123";
+let adminPin = localStorage.getItem("adminPin") || "1234";
+let empPin = localStorage.getItem("empPin") || "0000";
 
-let currentRole = localStorage.getItem("role") || "";
+let exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500;
+let role = localStorage.getItem("role") || "";
 
 function saveAll(){
 localStorage.setItem("caisse",JSON.stringify(caisse));
 localStorage.setItem("operators",JSON.stringify(operators));
 localStorage.setItem("types",JSON.stringify(types));
 localStorage.setItem("transactions",JSON.stringify(transactions));
-localStorage.setItem("role",currentRole);
+localStorage.setItem("adminPin",adminPin);
+localStorage.setItem("empPin",empPin);
+localStorage.setItem("exchangeRate",exchangeRate);
+localStorage.setItem("role",role);
 }
 
 function login(){
-let pass=document.getElementById("password").value;
+let pin=document.getElementById("pinInput").value;
 
-if(pass===ADMIN_PIN){
-currentRole="admin";
-showApp();
+if(pin===adminPin){
+role="admin";
 }
-else if(pass===EMP_PIN){
-currentRole="employee";
-showApp();
+else if(pin===empPin){
+role="employee";
 }
 else{
 alert("PIN incorrect");
+return;
 }
+
 saveAll();
+showApp();
 }
 
 function logout(){
-localStorage.removeItem("role");
+role="";
+saveAll();
 location.reload();
 }
 
 function showApp(){
-if(currentRole){
+if(role){
 document.getElementById("loginSection").classList.add("hidden");
 document.getElementById("appSection").classList.remove("hidden");
 
-if(currentRole==="employee"){
+if(role==="employee"){
 document.getElementById("adminSection").style.display="none";
 }
 
 display();
+}
+}
+
+function changeAdminPin(){
+if(role!=="admin")return;
+let newPin=document.getElementById("newAdminPin").value;
+if(newPin){
+adminPin=newPin;
+saveAll();
+alert("PIN Admin modifié");
+}
+}
+
+function changeEmpPin(){
+if(role!=="admin")return;
+let newPin=document.getElementById("newEmpPin").value;
+if(newPin){
+empPin=newPin;
+saveAll();
+alert("PIN Employé modifié");
+}
+}
+
+function setRate(){
+let rate=parseFloat(document.getElementById("exchangeRate").value);
+if(rate>0){
+exchangeRate=rate;
+saveAll();
+alert("Taux mis à jour");
+}
+}
+
+function setInitialCaisse(){
+if(role!=="admin")return;
+caisse.USD=parseFloat(document.getElementById("initUSD").value)||0;
+caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0;
+saveAll();
+display();
+}
+
+function addOperator(){
+if(role!=="admin")return;
+
+let name=document.getElementById("newOperator").value;
+let usd=parseFloat(document.getElementById("opInitUSD").value)||0;
+let cdf=parseFloat(document.getElementById("opInitCDF").value)||0;
+let stock=parseFloat(document.getElementById("opStock").value)||0;
+
+if(!name)return;
+
+operators.push({name,USD:usd,CDF:cdf,stock:stock});
+saveAll();
+display();
+}
+
+function deleteOperator(i){
+if(role!=="admin")return;
+operators.splice(i,1);
+saveAll();
+display();
+}
+
+function addType(){
+if(role!=="admin")return;
+let name=document.getElementById("newTypeName").value;
+let impactCaisse=parseInt(document.getElementById("impactCaisse").value);
+let impactOperateur=parseInt(document.getElementById("impactOperateur").value);
+if(!name)return;
+types.push({name,impactCaisse,impactOperateur});
+saveAll();
+display();
+}
+
+function deleteType(i){
+if(role!=="admin")return;
+types.splice(i,1);
+saveAll();
+display();
+}
+
+function addTransaction(){
+let opIndex=document.getElementById("operatorSelect").value;
+let typeIndex=document.getElementById("typeSelect").value;
+let currency=document.getElementById("currency").value;
+let amount=parseFloat(document.getElementById("amount").value);
+let motif=document.getElementById("motif").value;
+
+if(amount<=0)return;
+
+let operator=operators[opIndex];
+let type=types[typeIndex];
+
+caisse[currency]+= amount * type.impactCaisse;
+operator[currency]+= amount * type.impactOperateur;
+
+transactions.push({
+date:new Date(),
+operator:operator.name,
+type:type.name,
+currency,
+amount,
+motif
+});
+
+saveAll();
+display();
+}
+
+function exchange(){
+let direction=document.getElementById("exchangeDirection").value;
+let amount=parseFloat(document.getElementById("exchangeAmount").value);
+if(amount<=0)return;
+
+if(direction==="USDtoCDF"){
+caisse.USD-=amount;
+caisse.CDF+=amount*exchangeRate;
+}
+
+if(direction==="CDFtoUSD"){
+caisse.CDF-=amount;
+caisse.USD+=amount/exchangeRate;
+}
+
+saveAll();
+display();
+}
+
+function filterHistory(){
+let start=new Date(document.getElementById("startDate").value);
+let end=new Date(document.getElementById("endDate").value);
+
+let filtered=transactions.filter(t=>{
+let d=new Date(t.date);
+return d>=start && d<=end;
+});
+
+displayHistory(filtered);
+}
+
+function display(){
+document.getElementById("caisseUSD").innerText=caisse.USD;
+document.getElementById("caisseCDF").innerText=caisse.CDF;
+
+let opHTML="";
+let opSelect="";
+operators.forEach((op,i)=>{
+opHTML+=`<div class="card">
+${op.name} | USD:${op.USD} | CDF:${op.CDF} | STOCK:${op.stock||0}
+${role==="admin"?`<button onclick="deleteOperator(${i})">X</button>`:""}
+</div>`;
+opSelect+=`<option value="${i}">${op.name}</option>`;
+});
+document.getElementById("operatorBalances").innerHTML=opHTML;
+document.getElementById("operatorList").innerHTML=opHTML;
+document.getElementById("operatorSelect").innerHTML=opSelect;
+
+let typeHTML="";
+let typeSelect="";
+types.forEach((t,i)=>{
+typeHTML+=`<div class="card">${t.name}
+${role==="admin"?`<button onclick="deleteType(${i})">X</button>`:""}
+</div>`;
+typeSelect+=`<option value="${i}">${t.name}</option>`;
+});
+document.getElementById("typeList").innerHTML=typeHTML;
+document.getElementById("typeSelect").innerHTML=typeSelect;
+
+displayHistory(transactions);
+}
+
+function displayHistory(list){
+let historyHTML="";
+list.slice().reverse().forEach(t=>{
+historyHTML+=`<div class="card">
+${new Date(t.date).toLocaleString()} |
+${t.operator} |
+${t.type} |
+${t.amount} ${t.currency}
+<br>Motif: ${t.motif}
+</div>`;
+});
+document.getElementById("history").innerHTML=historyHTML;
+}
+
+showApp();
+
+</script>
+
+</body>
+</html>￼Enter
+<select id="impactCaisse">
+<option value="1">Caisse +</option>
+<option value="-1">Caisse -</option>
+<option value="0">Pas caisse</option>
+</select>
+
+<select id="impactOperateur">
+<option value="1">Opérateur +</option>
+<option value="-1">Opérateur -</option>
+<option value="0">Pas opérateur</option>
+</select>
+
+<button onclick="addType()">Ajouter Type</button>
+<div id="typeList"></div>
+
+<hr>
+
+<h3>Paramètres</h3>
+
+<input type="password" id="newAdminPin" placeholder="Nouveau PIN Admin">
+<button onclick="changeAdminPin()">Changer PIN Admin</button>
+
+<br>
+
+<input type="password" id="newEmpPin" placeholder="Nouveau PIN Employé">
+<button onclick="changeEmpPin()">Changer PIN Employé</button>
+
+<br>
+
+<input type="number" id="exchangeRate" placeholder="Taux USD → CDF">
+<button onclick="setRate()">Définir Taux</button>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0};
+let operators = JSON.parse(localStorage.getItem("operators")) || [];
+let types = JSON.parse(localStorage.getItem("types")) || [];
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+
+let adminPin = localStorage.getItem("adminPin") || "1234";
+let empPin = localStorage.getItem("empPin") || "0000";
+
+let exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500;
+let role = localStorage.getItem("role") || "";
+
+function saveAll(){
+localStorage.setItem("caisse",JSON.stringify(caisse));
+localStorage.setItem("operators",JSON.stringify(operators));
+localStorage.setItem("types",JSON.stringify(types));
+localStorage.setItem("transactions",JSON.stringify(transactions));
+localStorage.setItem("adminPin",adminPin);
+localStorage.setItem("empPin",empPin);
+localStorage.setItem("exchangeRate",exchangeRate);
+localStorage.setItem("role",role);
+}
+
+function login(){
+let pin=document.getElementById("pinInput").value;
+
+if(pin===adminPin){
+role="admin";
+}
+else if(pin===empPin){
+role="employee";
+}
+else{
+alert("PIN incorrect");
+return;
+}
+
+saveAll();
+showApp();
+}
+
+function logout(){
+role="";
+saveAll();
+location.reload();
+}
+
+function showApp(){
+if(role){
+document.getElementById("loginSection").classList.add("hidden");
+document.getElementById("appSection").classList.remove("hidden");
+
+if(role==="employee"){
+document.getElementById("adminSection").style.display="none";
+}
+
+y();
+}
+}
+
+function changeAdminPin(){
+if(role!=="admin")return;
+let newPin=document.getElementById("newAdminPin").value;
+if(newPin){
+adminPin=newPin;
+saveAll();
+alert("PIN Admin modifié");
+}
+}
+
+function changeEmpPin(){
+if(role!=="admin")return;
+let newPin=document.getElementById("newEmpPin").value;
+if(newPin){
+empPin=newPin;
+saveAll();
+alert("PIN Employé modifié");
+}
+}
+
+function setRate(){
+let rate=parseFloat(document.getElementById("exchangeRate").value);
+if(rate>0){
+exchangeRate=rate;
+saveAll();
+alert("Taux mis à jour");
+}
+}
+
+function setInitialCaisse(){
+if(role!=="admin")return;
+caisse.USD=parseFloat(document.getElementById("initUSD").value)||0;
+caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0;
+saveAll();
+display();
+}
+
+function addOperator(){
+if(role!=="admin")return;
+
+let name=document.getElementById("newOperator").value;
+let usd=parseFloat(document.getElementById("opInitUSD").value)||0;
+let cdf=parseFloat(document.getElementById("opInitCDF").value)||0;
+let stock=parseFloat(document.getElementById("opStock").value)||0;
+
+if(!name)return;
+
+operators.push({name,USD:usd,CDF:cdf,stock:stock});
+saveAll();
+display();
+}
+
+function deleteOperator(i){
+if(role!=="admin")return;
+operators.splice(i,1);
+saveAll();
+display();
+}
+
+function addType(){
+if(role!=="admin")return;
+let name=document.getElementById("newTypeName").value;
+let impactCaisse=parseInt(document.getElementById("impactCaisse").value);
+let impactOperateur=parseInt(document.getElementById("impactOperateur").value);
+if(!name)return;
+types.push({name,impactCaisse,impactOperateur});
+saveAll();
+display();
+}
+
+function deleteType(i){
+if(role!=="admin")return;
+types.splice(i,1);
+saveAll();
+display();
+}
+
+function addTransaction(){
+let opIndex=document.getElementById("operatorSelect").value;
+let typeIndex=document.getElementById("typeSelect").value;
+let currency=document.getElementById("currency").value;
+let amount=parseFloat(document.getElementById("amount").value);
+let motif=document.getElementById("motif").value;
+
+if(amount<=0)return;
+
+let operator=operators[opIndex];
+let type=types[typeIndex];
+
+caisse[currency]+= amount * type.impactCaisse;
+operator[currency]+= amount * type.impactOperateur;
