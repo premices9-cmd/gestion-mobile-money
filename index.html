@@ -1,252 +1,251 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestion Mobile Money</title>
-
+<title>Gestion Mobile Money Pro</title>
 <style>
 body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f9;
-    padding:15px;
+font-family:Arial;
+background:#1f3c88;
+color:white;
+text-align:center;
+margin:0;
+padding:0;
 }
-
-h2{
-    background:#1e88e5;
-    color:white;
-    padding:10px;
-    border-radius:6px;
+.container{
+background:white;
+color:black;
+margin:20px;
+padding:20px;
+border-radius:20px;
 }
-
-.card{
-    background:white;
-    padding:15px;
-    margin-bottom:15px;
-    border-radius:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
 input,select,button{
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    border-radius:6px;
-    border:1px solid #ccc;
+width:90%;
+padding:10px;
+margin:8px;
+border-radius:10px;
+border:1px solid gray;
 }
-
 button{
-    background:#1e88e5;
-    color:white;
-    font-weight:bold;
-    border:none;
+font-weight:bold;
+cursor:pointer;
 }
-
-button:hover{
-    background:#1565c0;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-}
-
-table,th,td{
-    border:1px solid #ddd;
-}
-
-th{
-    background:#1e88e5;
-    color:white;
-    padding:8px;
-}
-
-td{
-    padding:6px;
-    text-align:center;
-}
-
-.dashboard{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-}
-
-.stat{
-    background:#1e88e5;
-    color:white;
-    padding:10px;
-    border-radius:6px;
-    text-align:center;
+.green{background:green;color:white;}
+.red{background:red;color:white;}
+.blue{background:#1f3c88;color:white;}
+.card{
+background:#f2f2f2;
+padding:10px;
+margin:5px;
+border-radius:10px;
 }
 </style>
 </head>
-
 <body>
 
-<h2>Gestion Mobile Money</h2>
+<h1>Gestion Mobile Money Pro</h1>
 
-<div class="card">
-<h3>Nouvelle Vente</h3>
-<input type="text" id="client" placeholder="Nom du client">
+<div class="container">
 
-<select id="operateur"></select>
+<h3>Tableau de bord</h3>
+<p>Total USD: <span id="totalUSD">0</span> $</p>
+<p>Total CDF: <span id="totalCDF">0</span> CDF</p>
+<p>Total Crédit: <span id="totalCredit">0</span></p>
+
+<hr>
+
+<h3>Nouvelle Transaction</h3>
+
+<select id="operator">
+<option>MTN</option>
+<option>Airtel</option>
+<option>Orange</option>
+<option>Africell</option>
+</select>
+
+<select id="currency">
+<option>USD</option>
+<option>CDF</option>
+</select>
 
 <select id="type">
-<option value="Cash">Cash</option>
-<option value="Virtuel">Virtuel</option>
-<option value="Credit">Crédit</option>
+<option value="deposit">Dépôt</option>
+<option value="withdraw">Retrait</option>
+<option value="credit">Crédit</option>
 </select>
 
-<input type="number" id="montant" placeholder="Montant">
+<input type="number" id="amount" placeholder="Montant">
 
-<select id="devise">
-<option value="USD">USD</option>
-<option value="CDF">CDF</option>
-</select>
+<button class="green" onclick="addTransaction()">Valider</button>
 
-<button onclick="ajouterTransaction()">Enregistrer</button>
-</div>
+<hr>
 
-<div class="card">
-<h3>Gestion Opérateurs</h3>
-<input type="text" id="nouvelOperateur" placeholder="Ajouter opérateur">
-<button onclick="ajouterOperateur()">Ajouter</button>
-<ul id="listeOperateurs"></ul>
-</div>
+<h3>Taux USD → CDF</h3>
+<input type="number" id="rate" placeholder="Ex: 2500">
+<button class="blue" onclick="saveRate()">Enregistrer taux</button>
 
-<div class="card">
-<h3>Taux de change (USD → CDF)</h3>
-<input type="number" id="taux" value="2500">
-</div>
+<hr>
 
-<div class="card">
-<h3>Tableau de Bord</h3>
-<div class="dashboard">
-<div class="stat" id="totalVentes">Total Ventes: 0</div>
-<div class="stat" id="totalCredit">Total Crédit: 0</div>
-<div class="stat" id="benefice">Total Montant: 0</div>
-<div class="stat" id="nbTransactions">Transactions: 0</div>
-</div>
-</div>
+<h3>Historique</h3>
+<div id="history"></div>
 
-<div class="card">
-<h3>Historique des Transactions</h3>
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Client</th>
-<th>Opérateur</th>
-<th>Type</th>
-<th>Montant</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody id="historique"></tbody>
-</table>
 </div>
 
 <script>
+
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-let operateurs = JSON.parse(localStorage.getItem("operateurs")) || ["MTN","Airtel"];
+let rate = localStorage.getItem("rate") || 2500;
 
-function sauvegarder(){
-    localStorage.setItem("transactions",JSON.stringify(transactions));
-    localStorage.setItem("operateurs",JSON.stringify(operateurs));
+document.getElementById("rate").value = rate;
+
+function saveRate(){
+rate = document.getElementById("rate").value;
+localStorage.setItem("rate",rate);
+alert("Taux enregistré");
 }
 
-function chargerOperateurs(){
-    let select = document.getElementById("operateur");
-    let liste = document.getElementById("listeOperateurs");
-    select.innerHTML="";
-    liste.innerHTML="";
-    operateurs.forEach((op,index)=>{
-        select.innerHTML+=`<option>${op}</option>`;
-        liste.innerHTML+=`<li>${op} <button onclick="supprimerOperateur(${index})">X</button></li>`;
-    });
+function addTransaction(){
+let operator = document.getElementById("operator").value;
+let currency = document.getElementById("currency").value;
+let type = document.getElementById("type").value;
+let amount = parseFloat(document.getElementById("amount").value);
+
+if(!amount){alert("Entrer montant");return;}
+
+let transaction = {
+date:new Date().toLocaleString(),
+operator,
+currency,
+type,
+amount
+};
+
+transactions.push(transaction);
+localStorage.setItem("transactions",JSON.stringify(transactions));
+
+document.getElementById("amount").value="";
+display();
 }
 
-function ajouterOperateur(){
-    let op = document.getElementById("nouvelOperateur").value;
-    if(op){
-        operateurs.push(op);
-        sauvegarder();
-        chargerOperateurs();
-        document.getElementById("nouvelOperateur").value="";
-    }
+function display(){
+let totalUSD=0;
+let totalCDF=0;
+let totalCredit=0;
+
+let historyHTML="";
+
+transactions.forEach((t,index)=>{
+
+if(t.type=="deposit"){
+if(t.currency=="USD") totalUSD+=t.amount;
+else totalCDF+=t.amount;
 }
 
-function supprimerOperateur(index){
-    operateurs.splice(index,1);
-    sauvegarder();
-    chargerOperateurs();
+if(t.type=="withdraw"){
+if(t.currency=="USD") totalUSD-=t.amount;
+else totalCDF-=t.amount;
 }
 
-function ajouterTransaction(){
-    let client = document.getElementById("client").value;
-    let operateur = document.getElementById("operateur").value;
-    let type = document.getElementById("type").value;
-    let montant = parseFloat(document.getElementById("montant").value);
-    let devise = document.getElementById("devise").value;
-    let taux = parseFloat(document.getElementById("taux").value);
-
-    if(devise==="USD"){
-        montant = montant * taux;
-    }
-
-    let transaction = {
-        date:new Date().toLocaleString(),
-        client,
-        operateur,
-        type,
-        montant
-    };
-
-    transactions.push(transaction);
-    sauvegarder();
-    afficherTransactions();
+if(t.type=="credit"){
+totalCredit+=t.amount;
 }
 
-function afficherTransactions(){
-    let tbody = document.getElementById("historique");
-    tbody.innerHTML="";
-    let total=0;
-    let totalCredit=0;
+historyHTML+=`
+<div class="card">
+${t.date}<br>
+${t.operator} - ${t.type}<br>
+${t.amount} ${t.currency}
+</div>
+`;
 
-    transactions.forEach((t,index)=>{
-        total+=t.montant;
-        if(t.type==="Credit"){
-            totalCredit+=t.montant;
-        }
+});
 
-        tbody.innerHTML+=`
-        <tr>
-        <td>${t.date}</td>
-        <td>${t.client}</td>
-        <td>${t.operateur}</td>
-        <td>${t.type}</td>
-        <td>${t.montant} CDF</td>
-        <td><button onclick="supprimerTransaction(${index})">Supprimer</button></td>
-        </tr>`;
-    });
-
-    document.getElementById("totalVentes").innerText="Total Ventes: "+(total-totalCredit)+" CDF";
-    document.getElementById("totalCredit").innerText="Total Crédit: "+totalCredit+" CDF";
-    document.getElementById("benefice").innerText="Total Montant: "+total+" CDF";
-    document.getElementById("nbTransactions").innerText="Transactions: "+transactions.length;
+document.getElementById("totalUSD").innerText=totalUSD;
+document.getElementById("totalCDF").innerText=totalCDF;
+document.getElementById("totalCredit").innerText=totalCredit;
+document.getElementById("history").innerHTML=historyHTML;
 }
 
-function supprimerTransaction(index){
-    transactions.splice(index,1);
-    sauvegarder();
-    afficherTransactions();
-}
+display();
 
-chargerOperateurs();
-afficherTransactions();
 </script>
 
 </body>
-    </html>
+</html>￼EnterYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gestion Mobile Money Pro</title>
+<style>
+body{
+font-family:Arial;
+background:#1f3c88;
+color:white;
+text-align:center;
+margin:0;
+padding:0;
+}
+.container{
+background:white;
+color:black;
+margin:20px;
+padding:20px;
+border-radius:20px;
+}
+input,select,button{
+width:90%;
+padding:10px;
+margin:8px;
+border-radius:10px;
+border:1px solid gray;
+}
+button{
+font-weight:bold;
+cursor:pointer;
+}
+.green{background:green;color:white;}
+.red{background:red;color:white;}
+.blue{background:#1f3c88;color:white;}
+.card{
+background:#f2f2f2;
+padding:10px;
+margin:5px;
+border-radius:10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Gestion Mobile Money Pro</h1>
+
+<div class="container">
+
+<h3>Tableau de bord</h3>
+<p>Total USD: <span id="totalUSD">0</span> $</p>
+<p>Total CDF: <span id="totalCDF">0</span> CDF</p>
+<p>Total Crédit: <span id="totalCredit">0</span></p>
+
+<hr>
+
+<h3>Nouvelle Transaction</h3>
+
+<select id="operator">
+<option>MTN</option>
+<option>Airtel</option>
+<option>Orange</option>
+<option>Africell</option>
+</select>
+
+<select id="currency">
+<option>USD</option>
+<option>CDF</option>
+</select>
+
+<select id="type">
+<option value="deposit">Dépôt</option>
+<option value="withdraw">Retrait</option>
+<option value="credit">Crédit</option>
+</select>
+
+<input type="number" id="amount" placeholder="Montant">
+
