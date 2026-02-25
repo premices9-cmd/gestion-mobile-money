@@ -5,315 +5,362 @@
 <title>Gestion Mobile Money Pro</title>
 
 <style>
-body{
-font-family:Arial;
-background:#1f3c88;
-color:white;
-text-align:center;
-margin:0;
-padding:0;
-}
-
-.container{
-background:white;
-color:black;
-margin:20px;
-padding:20px;
-border-radius:20px;
-}
-
-input,select,button{
-width:90%;
-padding:10px;
-margin:8px;
-border-radius:10px;
-border:1px solid gray;
-}
-
-button{
-font-weight:bold;
-cursor:pointer;
-background:#1f3c88;
-color:white;
-}
-
-.card{
-background:#f2f2f2;
-padding:10px;
-margin:5px;
-border-radius:10px;
-}
+body {font-family: Arial; background:#0f172a; margin:0; color:white}
+h1 {text-align:center; padding:15px}
+.container {background:white; color:black; margin:15px; padding:15px; border-radius:15px}
+input, select, button {padding:8px; margin:5px; border-radius:8px; border:1px solid #ccc}
+button {cursor:pointer; background:#0f172a; color:white}
+.card {background:#f1f5f9; padding:8px; margin:5px; border-radius:8px}
+.hidden {display:none}
+hr {margin:25px 0}
 </style>
-</head>
 
+</head>
 <body>
 
 <h1>Gestion Mobile Money Pro</h1>
 
 <div class="container">
 
-<h3>Tableau de bord</h3>
+<!-- 🔐 LOGIN -->
+<div id="loginSection">
+<h2>Connexion Admin</h2>
+<input type="password" id="adminPassword" placeholder="Mot de passe">
+<button onclick="login()">Se connecter</button>
+</div>
 
-<p>Caisse USD: <span id="totalUSD">0</span> $</p>
-<p>Caisse CDF: <span id="totalCDF">0</span> CDF</p>
+<!-- 🔓 MAIN APP -->
+<div id="appSection" class="hidden">
 
-<p>Virtuel USD: <span id="totalVirtuelUSD">0</span> $</p>
-<p>Virtuel CDF: <span id="totalVirtuelCDF">0</span> CDF</p>
+<button onclick="logout()">Déconnexion</button>
 
-<p>Total Crédit: <span id="totalCredit">0</span></p>
-<p>Total Créance: <span id="totalCreance">0</span></p>
+<h2>Solde Caisse</h2>
+<p>USD: <span id="caisseUSD">0</span></p>
+<p>CDF: <span id="caisseCDF">0</span></p>
+
+<h2>Solde Opérateurs</h2>
+<div id="operatorBalances"></div>
 
 <hr>
 
-<h3>Nouvelle Transaction</h3>
+<h2>Nouvelle Transaction</h2>
 
-<select id="operator">
-<option>MTN</option>
-<option>Airtel</option>
-<option>Orange</option>
-<option>Africell</option>
-</select>
+<select id="operatorSelect"></select>
+<select id="typeSelect"></select>
 
 <select id="currency">
-<option>USD</option>
-<option>CDF</option>
-</select>
-
-<select id="type">
-<option>Credit client</option>
-<option>Paiement credit</option>
-<option>Creance</option>
-<option>Paiement creance</option>
-<option>Autre</option>
-</select>
-
-<select id="mode">
-<option value="cash">Cash</option>
-<option value="virtuelle">Virtuelle</option>
+<option value="USD">USD</option>
+<option value="CDF">CDF</option>
 </select>
 
 <input type="number" id="amount" placeholder="Montant">
+<input type="text" id="motif" placeholder="Motif">
 
 <button onclick="addTransaction()">Valider</button>
 
 <hr>
 
-<h3>Historique</h3>
+<h2>Échange USD ⇄ CDF</h2>
+
+<select id="exchangeDirection">
+<option value="USDtoCDF">USD → CDF</option>
+<option value="CDFtoUSD">CDF → USD</option>
+</select>
+
+<input type="number" id="exchangeAmount" placeholder="Montant">
+<button onclick="exchange()">Échanger</button>
+
+<hr>
+
+<h2>Filtrer Historique</h2>
+<input type="date" id="startDate">
+<input type="date" id="endDate">
+<button onclick="filterHistory()">Filtrer</button>
+<button onclick="display()">Réinitialiser</button>
+
+<hr>
+
+<h2>Historique</h2>
 <div id="history"></div>
 
+<hr>
+
+<h2>ADMIN - Soldes Initiaux</h2>
+
+<h3>Caisse</h3>
+<input type="number" id="initUSD" placeholder="USD">
+<input type="number" id="initCDF" placeholder="CDF">
+<button onclick="setInitialCaisse()">Définir</button>
+
+<hr>
+
+<h3>Opérateurs</h3>
+<input type="text" id="newOperator" placeholder="Nom opérateur">
+<input type="number" id="opInitUSD" placeholder="USD">
+<input type="number" id="opInitCDF" placeholder="CDF">
+<button onclick="addOperator()">Ajouter</button>
+
+<div id="operatorList"></div>
+
+<hr>
+
+<h3>Types d'opération</h3>
+<input type="text" id="newTypeName" placeholder="Nom type">
+
+<select id="impactCaisse">
+<option value="1">Caisse +</option>
+<option value="-1">Caisse -</option>
+<option value="0">Pas caisse</option>
+</select>
+
+<select id="impactOperateur">
+<option value="1">Opérateur +</option>
+<option value="-1">Opérateur -</option>
+<option value="0">Pas opérateur</option>
+</select>
+
+<button onclick="addType()">Ajouter Type</button>
+<div id="typeList"></div>
+
+<hr>
+
+<h3>Paramètres</h3>
+
+<input type="password" id="newPassword" placeholder="Nouveau mot de passe">
+<button onclick="changePassword()">Changer mot de passe</button>
+
+<br>
+
+<input type="number" id="exchangeRate" placeholder="Taux USD → CDF">
+<button onclick="setRate()">Définir Taux</button>
+
+</div>
 </div>
 
 <script>
 
-let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0}
+let operators = JSON.parse(localStorage.getItem("operators")) || []
+let types = JSON.parse(localStorage.getItem("types")) || []
+let transactions = JSON.parse(localStorage.getItem("transactions")) || []
+let adminPassword = localStorage.getItem("adminPassword") || "admin123"
+let exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500
+let loggedIn = localStorage.getItem("loggedIn") || "false"
+
+function saveAll(){
+localStorage.setItem("caisse",JSON.stringify(caisse))
+localStorage.setItem("operators",JSON.stringify(operators))
+localStorage.setItem("types",JSON.stringify(types))
+localStorage.setItem("transactions",JSON.stringify(transactions))
+localStorage.setItem("adminPassword",adminPassword)
+localStorage.setItem("exchangeRate",exchangeRate)
+localStorage.setItem("loggedIn",loggedIn)
+}
+
+function login(){
+let pass=document.getElementById("adminPassword").value
+if(pass===adminPassword){
+loggedIn="true"
+saveAll()
+showApp()
+}else{
+alert("Mot de passe incorrect")
+}
+}
+
+function logout(){
+loggedIn="false"
+saveAll()
+location.reload()
+}
+
+function showApp(){
+if(loggedIn==="true"){
+document.getElementById("loginSection").classList.add("hidden")
+document.getElementById("appSection").classList.remove("hidden")
+display()
+}
+}
+
+function changePassword(){
+let newPass=document.getElementById("newPassword").value
+if(!newPass)return
+adminPassword=newPass
+saveAll()
+alert("Mot de passe modifié")
+}
+
+function setRate(){
+let rate=parseFloat(document.getElementById("exchangeRate").value)
+if(rate>0){
+exchangeRate=rate
+saveAll()
+alert("Taux mis à jour")
+}
+}
+
+function setInitialCaisse(){
+caisse.USD=parseFloat(document.getElementById("initUSD").value)||0
+caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0
+saveAll()
+display()
+}
+
+function addOperator(){
+let name=document.getElementById("newOperator").value
+let usd=parseFloat(document.getElementById("opInitUSD").value)||0
+let cdf=parseFloat(document.getElementById("opInitCDF").value)||0
+if(!name)return
+operators.push({name,USD:usd,CDF:cdf})
+saveAll()
+display()
+}
+
+function deleteOperator(i){
+operators.splice(i,1)
+saveAll()
+display()
+}
+
+function addType(){
+let name=document.getElementById("newTypeName").value
+let impactCaisse=parseInt(document.getElementById("impactCaisse").value)
+let impactOperateur=parseInt(document.getElementById("impactOperateur").value)
+if(!name)return
+types.push({name,impactCaisse,impactOperateur})
+saveAll()
+display()
+}
+
+function deleteType(i){
+types.splice(i,1)
+saveAll()
+display()
+}
 
 function addTransaction(){
 
-let operator = document.getElementById("operator").value;
-let currency = document.getElementById("currency").value;
-let type = document.getElementById("type").value;
-let mode = document.getElementById("mode").value;
-let amount = parseFloat(document.getElementById("amount").value);
+let opIndex=document.getElementById("operatorSelect").value
+let typeIndex=document.getElementById("typeSelect").value
+let currency=document.getElementById("currency").value
+let amount=parseFloat(document.getElementById("amount").value)
+let motif=document.getElementById("motif").value
 
-if(!amount){ alert("Entrer montant"); return; }
+if(amount<=0)return
 
-let transaction = {
-date:new Date().toLocaleString(),
-operator,
+let operator=operators[opIndex]
+let type=types[typeIndex]
+
+caisse[currency]+= amount * type.impactCaisse
+operator[currency]+= amount * type.impactOperateur
+
+transactions.push({
+date:new Date(),
+operator:operator.name,
+type:type.name,
 currency,
-type,
-mode,
-amount
-};
+amount,
+motif
+})
 
-transactions.push(transaction);
-localStorage.setItem("transactions", JSON.stringify(transactions));
+saveAll()
+display()
+}
 
-document.getElementById("amount").value="";
-display();
+function exchange(){
+
+let direction=document.getElementById("exchangeDirection").value
+let amount=parseFloat(document.getElementById("exchangeAmount").value)
+if(amount<=0)return
+
+if(direction==="USDtoCDF"){
+caisse.USD-=amount
+caisse.CDF+=amount*exchangeRate
+transactions.push({
+date:new Date(),
+operator:"Caisse",
+type:"Échange USD→CDF",
+currency:"USD",
+amount,
+motif:"Échange automatique"
+})
+}
+
+if(direction==="CDFtoUSD"){
+caisse.CDF-=amount
+caisse.USD+=amount/exchangeRate
+transactions.push({
+date:new Date(),
+operator:"Caisse",
+type:"Échange CDF→USD",
+currency:"CDF",
+amount,
+motif:"Échange automatique"
+})
+}
+
+saveAll()
+display()
+}
+
+function filterHistory(){
+
+let start=new Date(document.getElementById("startDate").value)
+let end=new Date(document.getElementById("endDate").value)
+
+let filtered=transactions.filter(t=>{
+let d=new Date(t.date)
+return d>=start && d<=end
+})
+
+displayHistory(filtered)
 }
 
 function display(){
 
-let totalUSD=0;
-let totalCDF=0;
-let totalVirtuelUSD=0;
-let totalVirtuelCDF=0;
-let totalCredit=0;
-let totalCreance=0;
+document.getElementById("caisseUSD").innerText=caisse.USD
+document.getElementById("caisseCDF").innerText=caisse.CDF
 
-let historyHTML="";
+let opHTML=""
+let opSelect=""
+operators.forEach((op,i)=>{
+opHTML+=`<div class="card">${op.name} | USD:${op.USD} | CDF:${op.CDF}
+<button onclick="deleteOperator(${i})">X</button></div>`
+opSelect+=`<option value="${i}">${op.name}</option>`
+})
+document.getElementById("operatorBalances").innerHTML=opHTML
+document.getElementById("operatorList").innerHTML=opHTML
+document.getElementById("operatorSelect").innerHTML=opSelect
 
-transactions.forEach(t=>{
+let typeHTML=""
+let typeSelect=""
+types.forEach((t,i)=>{
+typeHTML+=`<div class="card">${t.name}
+<button onclick="deleteType(${i})">X</button></div>`
+typeSelect+=`<option value="${i}">${t.name}</option>`
+})
+document.getElementById("typeList").innerHTML=typeHTML
+document.getElementById("typeSelect").innerHTML=typeSelect
 
-let typeLower = t.type.toLowerCase();
-
-
-// ===== CREDIT =====
-if(typeLower.includes("credit") && !typeLower.includes("paiement")){
-totalCredit+=t.amount;
+displayHistory(transactions)
 }
 
-if(typeLower.includes("paiement credit")){
-totalCredit-=t.amount;
+function displayHistory(list){
+let historyHTML=""
+list.slice().reverse().forEach(t=>{
+historyHTML+=`<div class="card">
+${new Date(t.date).toLocaleString()} |
+${t.operator} |
+${t.type} |
+${t.amount} ${t.currency}
+<br>Motif: ${t.motif}
+</div>`
+})
+document.getElementById("history").innerHTML=historyHTML
 }
 
-// ===== CREANCE =====
-if(typeLower.includes("creance") && !typeLower.includes("paiement")){
-totalCreance+=t.amount;
-}
+showApp()
 
-if(typeLower.includes("paiement creance")){
-totalCreance-=t.amount;
-}
-
-
-// ===== IMPACT SELON MODE =====
-if(t.mode==="cash"){
-if(t.currency==="USD") totalUSD+=t.amount;
-else totalCDF+=t.amount;
-}
-
-if(t.mode==="virtuelle"){
-if(t.currency==="USD") totalVirtuelUSD+=t.amount;
-else totalVirtuelCDF+=t.amount;
-}
-
-
-historyHTML+=`
-<div class="card">
-${t.date}<br>
-${t.operator} - ${t.type}<br>
-${t.amount} ${t.currency} - ${t.mode}
-</div>
-`;
-
-});
-
-document.getElementById("totalUSD").innerText=totalUSD;
-document.getElementById("totalCDF").innerText=totalCDF;
-document.getElementById("totalVirtuelUSD").innerText=totalVirtuelUSD;
-document.getElementById("totalVirtuelCDF").innerText=totalVirtuelCDF;
-document.getElementById("totalCredit").innerText=totalCredit;
-document.getElementById("totalCreance").innerText=totalCreance;
-
-document.getElementById("history").innerHTML=historyHTML;
-}
-
-display();
-
-</script>
-
+  </script>
 </body>
-</html>￼Enter<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Gestion Mobile Money Pro</title>
-
-<style>
-body{
-font-family:Arial;
-background:#1f3c88;
-color:white;
-text-align:center;
-margin:0;
-padding:0;
-}
-
-.container{
-ound:white;
-color:black;
-margin:20px;
-padding:20px;
-border-radius:20px;
-}
-
-input,select,button{
-width:90%;
-padding:10px;
-margin:8px;
-border-radius:10px;
-border:1px solid gray;
-}
-
-button{
-font-weight:bold;
-cursor:pointer;
-background:#1f3c88;
-color:white;
-}
-
-.card{
-background:#f2f2f2;
-padding:10px;
-margin:5px;
-border-radius:10px;
-}
-</style>
-</head>
-
-<body>
-
-<h1>Gestion Mobile Money Pro</h1>
-
-<div class="container">
-
-<h3>Tableau de bord</h3>
-
-<p>Caisse USD: <span id="totalUSD">0</span> $</p>
-<p>Caisse CDF: <span id="totalCDF">0</span> CDF</p>
-
-<p>Virtuel USD: <span id="totalVirtuelUSD">0</span> $</p>
-<p>Virtuel CDF: <span id="totalVirtuelCDF">0</span> CDF</p>
-
-<p>Total Crédit: <span id="totalCredit">0</span></p>
-<p>Total Créance: <span id="totalCreance">0</span></p>
-
-<hr>
-
-<h3>Nouvelle Transaction</h3>
-
-<select id="operator">
-<option>MTN</option>
-<option>Airtel</option>
-<option>Orange</option>
-<option>Africell</option>
-</select>
-
-<select id="currency">
-<option>USD</option>
-<option>CDF</option>
-</select>
-
-<select id="type">
-<option>Credit client</option>
-<option>Paiement credit</option>
-<option>Creance</option>
-<option>Paiement creance</option>
-<option>Autre</option>
-</select>
-
-<select id="mode">
-<option value="cash">Cash</option>
-<option value="virtuelle">Virtuelle</option>
-</select>
-
-<input type="number" id="amount" placeholder="Montant">
-
-<button onclick="addTransaction()">Valider</button>
-
-<hr>
-
-<h3>Historique</h3>
-<div id="history"></div>
-
-</div>
-
-<script>
-
-let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-
-function addTransaction(){
-
-let operator = document.getElementById("operator").value;
+  </html>
