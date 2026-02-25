@@ -39,6 +39,12 @@ padding:10px;
 margin:5px;
 border-radius:10px;
 }
+.admin{
+background:#ffeeba;
+padding:15px;
+border-radius:15px;
+margin-top:20px;
+}
 </style>
 </head>
 <body>
@@ -56,23 +62,12 @@ border-radius:10px;
 
 <h3>Nouvelle Transaction</h3>
 
-<select id="operator">
-<option>MTN</option>
-<option>Airtel</option>
-<option>Orange</option>
-<option>Africell</option>
-</select>
-
+<select id="operator"></select>
 <select id="currency">
 <option>USD</option>
 <option>CDF</option>
 </select>
-
-<select id="type">
-<option value="deposit">Dépôt</option>
-<option value="withdraw">Retrait</option>
-<option value="credit">Crédit</option>
-</select>
+<select id="type"></select>
 
 <input type="number" id="amount" placeholder="Montant">
 
@@ -80,49 +75,115 @@ border-radius:10px;
 
 <hr>
 
-<h3>Taux USD → CDF</h3>
-<input type="number" id="rate" placeholder="Ex: 2500">
-<button class="blue" onclick="saveRate()">Enregistrer taux</button>
+<h3>Historique</h3>
+<div id="history"></div>
 
 <hr>
 
-<h3>Historique</h3>
-<div id="history"></div>
+<div class="admin">
+<h3>🔐 Administration</h3>
+
+<h4>Ajouter Opérateur</h4>
+<input type="text" id="newOperator" placeholder="Nom opérateur">
+<button class="blue" onclick="addOperator()">Ajouter</button>
+
+<h4>Supprimer Opérateur</h4>
+<select id="deleteOperator"></select>
+<button class="red" onclick="removeOperator()">Supprimer</button>
+
+<h4>Ajouter Type</h4>
+<input type="text" id="newType" placeholder="Ex: Vente Cash">
+<button class="blue" onclick="addType()">Ajouter</button>
+
+<h4>Supprimer Type</h4>
+<select id="deleteType"></select>
+<button class="red" onclick="removeType()">Supprimer</button>
+
+</div>
 
 </div>
 
 <script>
 
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-let rate = localStorage.getItem("rate") || 2500;
+let operators = JSON.parse(localStorage.getItem("operators")) || ["MTN","Airtel","Orange"];
+let types = JSON.parse(localStorage.getItem("types")) || ["deposit","withdraw","credit"];
 
-document.getElementById("rate").value = rate;
+function saveData(){
+localStorage.setItem("operators",JSON.stringify(operators));
+localStorage.setItem("types",JSON.stringify(types));
+}
 
-function saveRate(){
-rate = document.getElementById("rate").value;
-localStorage.setItem("rate",rate);
-alert("Taux enregistré");
+function loadSelects(){
+let opSelect=document.getElementById("operator");
+let delOp=document.getElementById("deleteOperator");
+opSelect.innerHTML="";
+delOp.innerHTML="";
+
+operators.forEach(op=>{
+opSelect.innerHTML+=`<option>${op}</option>`;
+delOp.innerHTML+=`<option>${op}</option>`;
+});
+
+let typeSelect=document.getElementById("type");
+let delType=document.getElementById("deleteType");
+typeSelect.innerHTML="";
+delType.innerHTML="";
+
+types.forEach(t=>{
+typeSelect.innerHTML+=`<option>${t}</option>`;
+delType.innerHTML+=`<option>${t}</option>`;
+});
+}
+
+function addOperator(){
+let newOp=document.getElementById("newOperator").value;
+if(!newOp) return;
+operators.push(newOp);
+saveData();
+loadSelects();
+document.getElementById("newOperator").value="";
+}
+
+function removeOperator(){
+let op=document.getElementById("deleteOperator").value;
+operators=operators.filter(o=>o!==op);
+saveData();
+loadSelects();
+}
+
+function addType(){
+let newType=document.getElementById("newType").value;
+if(!newType) return;
+types.push(newType);
+saveData();
+loadSelects();
+document.getElementById("newType").value="";
+}
+
+function removeType(){
+let t=document.getElementById("deleteType").value;
+types=types.filter(x=>x!==t);
+saveData();
+loadSelects();
 }
 
 function addTransaction(){
-let operator = document.getElementById("operator").value;
-let currency = document.getElementById("currency").value;
-let type = document.getElementById("type").value;
-let amount = parseFloat(document.getElementById("amount").value);
+let operator=document.getElementById("operator").value;
+let currency=document.getElementById("currency").value;
+let type=document.getElementById("type").value;
+let amount=parseFloat(document.getElementById("amount").value);
+if(!amount) return;
 
-if(!amount){alert("Entrer montant");return;}
-
-let transaction = {
+transactions.push({
 date:new Date().toLocaleString(),
 operator,
 currency,
 type,
 amount
-};
+});
 
-transactions.push(transaction);
 localStorage.setItem("transactions",JSON.stringify(transactions));
-
 document.getElementById("amount").value="";
 display();
 }
@@ -131,22 +192,19 @@ function display(){
 let totalUSD=0;
 let totalCDF=0;
 let totalCredit=0;
-
 let historyHTML="";
 
-transactions.forEach((t,index)=>{
+transactions.forEach(t=>{
 
-if(t.type=="deposit"){
-if(t.currency=="USD") totalUSD+=t.amount;
+if(t.type==="deposit"){
+if(t.currency==="USD") totalUSD+=t.amount;
 else totalCDF+=t.amount;
 }
-
-if(t.type=="withdraw"){
-if(t.currency=="USD") totalUSD-=t.amount;
+if(t.type==="withdraw"){
+if(t.currency==="USD") totalUSD-=t.amount;
 else totalCDF-=t.amount;
 }
-
-if(t.type=="credit"){
+if(t.type==="credit"){
 totalCredit+=t.amount;
 }
 
@@ -157,7 +215,6 @@ ${t.operator} - ${t.type}<br>
 ${t.amount} ${t.currency}
 </div>
 `;
-
 });
 
 document.getElementById("totalUSD").innerText=totalUSD;
@@ -166,86 +223,10 @@ document.getElementById("totalCredit").innerText=totalCredit;
 document.getElementById("history").innerHTML=historyHTML;
 }
 
+loadSelects();
 display();
 
 </script>
 
 </body>
-</html>￼EnterYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Gestion Mobile Money Pro</title>
-<style>
-body{
-font-family:Arial;
-background:#1f3c88;
-color:white;
-text-align:center;
-margin:0;
-padding:0;
-}
-.container{
-background:white;
-color:black;
-margin:20px;
-padding:20px;
-border-radius:20px;
-}
-input,select,button{
-width:90%;
-padding:10px;
-margin:8px;
-border-radius:10px;
-border:1px solid gray;
-}
-button{
-font-weight:bold;
-cursor:pointer;
-}
-.green{background:green;color:white;}
-.red{background:red;color:white;}
-.blue{background:#1f3c88;color:white;}
-.card{
-background:#f2f2f2;
-padding:10px;
-margin:5px;
-border-radius:10px;
-}
-</style>
-</head>
-<body>
-
-<h1>Gestion Mobile Money Pro</h1>
-
-<div class="container">
-
-<h3>Tableau de bord</h3>
-<p>Total USD: <span id="totalUSD">0</span> $</p>
-<p>Total CDF: <span id="totalCDF">0</span> CDF</p>
-<p>Total Crédit: <span id="totalCredit">0</span></p>
-
-<hr>
-
-<h3>Nouvelle Transaction</h3>
-
-<select id="operator">
-<option>MTN</option>
-<option>Airtel</option>
-<option>Orange</option>
-<option>Africell</option>
-</select>
-
-<select id="currency">
-<option>USD</option>
-<option>CDF</option>
-</select>
-
-<select id="type">
-<option value="deposit">Dépôt</option>
-<option value="withdraw">Retrait</option>
-<option value="credit">Crédit</option>
-</select>
-
-<input type="number" id="amount" placeholder="Montant">
-
+</html>
