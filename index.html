@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Gestion Mobile Money Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body {font-family: Arial; background:#0f172a; margin:0; color:white}
@@ -14,8 +15,8 @@ button {cursor:pointer; background:#0f172a; color:white}
 .hidden {display:none}
 hr {margin:25px 0}
 </style>
-
 </head>
+
 <body>
 
 <h1>Gestion Mobile Money Pro</h1>
@@ -23,8 +24,8 @@ hr {margin:25px 0}
 <div class="container">
 
 <div id="loginSection">
-<h2>Connexion Admin</h2>
-<input type="password" id="adminPassword" placeholder="Mot de passe">
+<h2>Connexion</h2>
+<input type="password" id="loginPin" placeholder="PIN">
 <button onclick="login()">Se connecter</button>
 </div>
 
@@ -42,7 +43,6 @@ hr {margin:25px 0}
 <hr>
 
 <h2>Nouvelle Transaction</h2>
-
 <select id="operatorSelect"></select>
 <select id="typeSelect"></select>
 
@@ -58,288 +58,191 @@ hr {margin:25px 0}
 
 <hr>
 
-<h2>Échange USD ⇄ CDF</h2>
-
-<select id="exchangeDirection">
-<option value="USDtoCDF">USD → CDF</option>
-<option value="CDFtoUSD">CDF → USD</option>
-</select>
-
-<input type="number" id="exchangeAmount" placeholder="Montant">
-<button onclick="exchange()">Échanger</button>
-
-<hr>
-
-<h2>Filtrer Historique</h2>
-<input type="date" id="startDate">
-<input type="date" id="endDate">
-<button onclick="filterHistory()">Filtrer</button>
-<button onclick="display()">Réinitialiser</button>
-
-<hr>
-
 <h2>Historique</h2>
 <div id="history"></div>
 
-<hr>
-
-<h2>ADMIN - Soldes Initiaux</h2>
-
-<h3>Caisse</h3>
-<input type="number" id="initUSD" placeholder="USD">
-<input type="number" id="initCDF" placeholder="CDF">
-<button onclick="setInitialCaisse()">Définir</button>
+<button onclick="exportPDF()">Exporter PDF</button>
 
 <hr>
 
-<h3>Opérateurs</h3>
-<input type="text" id="newOperator" placeholder="Nom opérateur">
+<div id="adminSection">
+
+<h3>Ajouter opérateur</h3>
+<input type="text" id="newOperator" placeholder="Nom">
+<select id="operatorCategory">
+<option value="money">Money</option>
+<option value="stock">Stock</option>
+<option value="mixte">Mixte</option>
+</select>
 <input type="number" id="opInitUSD" placeholder="USD">
 <input type="number" id="opInitCDF" placeholder="CDF">
+<input type="number" id="stockPriceUSD" placeholder="Prix Stock USD">
 <button onclick="addOperator()">Ajouter</button>
 
-<div id="operatorList"></div>
-
-<hr>
-
-<h3>Types d'opération</h3>
-<input type="text" id="newTypeName" placeholder="Nom type">
-
-<select id="impactCaisse">
-<option value="1">Caisse +</option>
-<option value="-1">Caisse -</option>
-<option value="0">Pas caisse</option>
-</select>
-
-<select id="impactOperateur">
-<option value="1">Opérateur +</option>
-<option value="-1">Opérateur -</option>
-<option value="0">Pas opérateur</option>
-</select>
-
-<button onclick="addType()">Ajouter Type</button>
-<div id="typeList"></div>
-
-<hr>
-
-<h3>Paramètres</h3>
-
-<input type="password" id="newPassword" placeholder="Nouveau mot de passe">
-<button onclick="changePassword()">Changer mot de passe</button>
-
-<br>
-
-<input type="number" id="exchangeRate" placeholder="Taux USD → CDF">
-<button onclick="setRate()">Définir Taux</button>
+</div>
 
 </div>
 </div>
 
-<script>
+<script type="module">
 
-let caisse = JSON.parse(localStorage.getItem("caisse")) || {USD:0,CDF:0};
-let operators = JSON.parse(localStorage.getItem("operators")) || [];
-let types = JSON.parse(localStorage.getItem("types")) || [];
-let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-let adminPassword = localStorage.getItem("adminPassword") || "admin123";
-let exchangeRate = parseFloat(localStorage.getItem("exchangeRate")) || 2500;
-let loggedIn = localStorage.getItem("loggedIn") || "false";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-function saveAll(){
-localStorage.setItem("caisse",JSON.stringify(caisse));
-localStorage.setItem("operators",JSON.stringify(operators));
-localStorage.setItem("types",JSON.stringify(types));
-localStorage.setItem("transactions",JSON.stringify(transactions));
-localStorage.setItem("adminPassword", adminPassword);
-localStorage.setItem("exchangeRate",exchangeRate);
-localStorage.setItem("loggedIn",loggedIn);
+const firebaseConfig = {
+  apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs",
+  authDomain: "mka-mobile-money.firebaseapp.com",
+  databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com",
+  projectId: "mka-mobile-money"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let caisse = {USD:0,CDF:0};
+let operators = [];
+let types = [];
+let transactions = [];
+
+let adminPin = "1234";
+let employeePin = "0000";
+let loggedIn = null;
+
+async function saveOnline(){
+await set(ref(db,"data"),{
+caisse,operators,transactions
+});
 }
 
-function login(){
-let pass=document.getElementById("adminPassword").value;
-if(pass===adminPassword){
-loggedIn="true";
-saveAll();
-showApp();
+async function loadOnline(){
+let snap = await get(ref(db,"data"));
+if(snap.exists()){
+let data = snap.val();
+caisse = data.caisse || caisse;
+operators = data.operators || [];
+transactions = data.transactions || [];
+}
+display();
+}
+
+window.login = function(){
+let pin=document.getElementById("loginPin").value;
+if(pin===adminPin){
+loggedIn="admin";
+}else if(pin===employeePin){
+loggedIn="employee";
 }else{
-alert("Mot de passe incorrect");
-}
+alert("PIN incorrect");
+return;
 }
 
-function logout(){
-loggedIn="false";
-saveAll();
+document.getElementById("loginSection").classList.add("hidden");
+document.getElementById("appSection").classList.remove("hidden");
+
+if(loggedIn==="employee"){
+document.getElementById("adminSection").style.display="none";
+}
+
+loadOnline();
+}
+
+window.logout = function(){
 location.reload();
 }
 
-function showApp(){
-if(loggedIn==="true"){
-document.getElementById("loginSection").classList.add("hidden");
-document.getElementById("appSection").classList.remove("hidden");
-display();
-}
-}
+window.addOperator = function(){
+if(loggedIn!=="admin") return;
 
-function changePassword(){
-let newPass=document.getElementById("newPassword").value;
-if(!newPass)return;
-adminPassword=newPass;
-saveAll();
-alert("Mot de passe modifié");
-}
-
-function setRate(){
-let rate=parseFloat(document.getElementById("exchangeRate").value);
-if(rate>0){
-exchangeRate=rate;
-saveAll();
-alert("Taux mis à jour");
-}
-}
-
-function setInitialCaisse(){
-caisse.USD=parseFloat(document.getElementById("initUSD").value)||0;
-caisse.CDF=parseFloat(document.getElementById("initCDF").value)||0;
-saveAll();
-display();
-}
-
-function addOperator(){
 let name=document.getElementById("newOperator").value;
+let category=document.getElementById("operatorCategory").value;
 let usd=parseFloat(document.getElementById("opInitUSD").value)||0;
 let cdf=parseFloat(document.getElementById("opInitCDF").value)||0;
-if(!name)return;
-operators.push({name,USD:usd,CDF:cdf});
-saveAll();
+let price=parseFloat(document.getElementById("stockPriceUSD").value)||0;
+
+let op={name,category,USD:usd,CDF:cdf,stock:0,priceUSD:price};
+operators.push(op);
+
+saveOnline();
 display();
 }
 
-function deleteOperator(i){
-operators.splice(i,1);
-saveAll();
-display();
-}
+window.addTransaction = function(){
 
-function addType(){
-let name=document.getElementById("newTypeName").value;
-let impactCaisse=parseInt(document.getElementById("impactCaisse").value);
-let impactOperateur=parseInt(document.getElementById("impactOperateur").value);
-if(!name)return;
-types.push({name,impactCaisse,impactOperateur});
-saveAll();
-display();
-}
-
-function deleteType(i){
-types.splice(i,1);
-saveAll();
-display();
-}
-
-function addTransaction(){
 let opIndex=document.getElementById("operatorSelect").value;
-let typeIndex=document.getElementById("typeSelect").value;
 let currency=document.getElementById("currency").value;
 let amount=parseFloat(document.getElementById("amount").value);
 let motif=document.getElementById("motif").value;
 
-if(amount<=0)return;
+if(amount<=0) return;
 
-let operator=operators[opIndex];
-let type=types[typeIndex];
+let op=operators[opIndex];
 
-caisse[currency]+= amount * type.impactCaisse;
-operator[currency]+= amount * type.impactOperateur;
+if(op.category==="stock"){
+if(op.stock<amount){ alert("Stock insuffisant"); return; }
+op.stock-=amount;
+let total=amount*op.priceUSD;
+op.USD+=total;
+caisse.USD+=total;
+}else{
+op[currency]+=amount;
+caisse[currency]+=amount;
+}
 
 transactions.push({
 date:new Date(),
-operator:operator.name,
-type:type.name,
-currency,
+operator:op.name,
 amount,
+currency,
 motif
 });
 
-saveAll();
+saveOnline();
 display();
-}
-
-function exchange(){
-let direction=document.getElementById("exchangeDirection").value;
-let amount=parseFloat(document.getElementById("exchangeAmount").value);
-if(amount<=0)return;
-
-if(direction==="USDtoCDF"){
-caisse.USD-=amount;
-caisse.CDF+=amount*exchangeRate;
-}
-
-if(direction==="CDFtoUSD"){
-caisse.CDF-=amount;
-caisse.USD+=amount/exchangeRate;
-}
-
-saveAll();
-display();
-}
-
-function filterHistory(){
-let start=new Date(document.getElementById("startDate").value);
-let end=new Date(document.getElementById("endDate").value);
-
-let filtered=transactions.filter(t=>{
-let d=new Date(t.date);
-return d>=start && d<=end;
-});
-
-displayHistory(filtered);
 }
 
 function display(){
 document.getElementById("caisseUSD").innerText=caisse.USD;
 document.getElementById("caisseCDF").innerText=caisse.CDF;
 
-let opHTML="";
-let opSelect="";
+let html="";
+let select="";
 operators.forEach((op,i)=>{
-opHTML+=`<div class="card">${op.name} | USD:${op.USD} | CDF:${op.CDF}
-<button onclick="deleteOperator(${i})">X</button></div>`;
-opSelect+=`<option value="${i}">${op.name}</option>`;
+html+=`<div class="card">
+${op.name} | Cat:${op.category} | Stock:${op.stock} | USD:${op.USD} | CDF:${op.CDF}
+</div>`;
+select+=`<option value="${i}">${op.name}</option>`;
 });
-document.getElementById("operatorBalances").innerHTML=opHTML;
-document.getElementById("operatorList").innerHTML=opHTML;
-document.getElementById("operatorSelect").innerHTML=opSelect;
+document.getElementById("operatorBalances").innerHTML=html;
+document.getElementById("operatorSelect").innerHTML=select;
 
-let typeHTML="";
-let typeSelect="";
-types.forEach((t,i)=>{
-typeHTML+=`<div class="card">${t.name}
-<button onclick="deleteType(${i})">X</button></div>`;
-typeSelect+=`<option value="${i}">${t.name}</option>`;
-});
-document.getElementById("typeList").innerHTML=typeHTML;
-document.getElementById("typeSelect").innerHTML=typeSelect;
-
-displayHistory(transactions);
-}
-
-function displayHistory(list){
-let historyHTML="";
-list.slice().reverse().forEach(t=>{
-historyHTML+=`<div class="card">
-${new Date(t.date).toLocaleString()} |
-${t.operator} |
-${t.type} |
-${t.amount} ${t.currency}
-<br>Motif: ${t.motif}
+let history="";
+transactions.slice().reverse().forEach(t=>{
+history+=`<div class="card">
+${new Date(t.date).toLocaleString()} | ${t.operator} | ${t.amount} ${t.currency}
 </div>`;
 });
-document.getElementById("history").innerHTML=historyHTML;
+document.getElementById("history").innerHTML=history;
 }
 
-showApp();
+window.exportPDF = function(){
+const { jsPDF } = window.jspdf;
+let doc = new jsPDF();
+let y=10;
+
+doc.text("Rapport Mobile Money",10,y);
+y+=10;
+
+transactions.forEach(t=>{
+doc.text(
+`${new Date(t.date).toLocaleDateString()} - ${t.operator} - ${t.amount} ${t.currency}`,
+10,y
+);
+y+=7;
+});
+
+doc.save("rapport.pdf");
+}
 
 </script>
-
 </body>
 </html>
