@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestion Mobile Money Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            margin: 0;
+        }
+
+        h1 {
+            padding: 15px;
+        }
+
+        .container {
+            background: white;
+            color: black;
+            width: 95%;
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        select, input {
+            width: 90%;
+            padding: 10px;
+            margin: 8px;
+            border-radius: 8px;
+            border: 1px solid gray;
+        }
+
+        button {
+            width: 95%;
+            padding: 12px;
+            margin: 5px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .depot { background: green; color: white; }
+        .retrait { background: red; color: white; }
+
+        ul {
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            padding-left: 15px;
+        }
+
+        .solde-box {
+            background: #f2f2f2;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Gestion Mobile Money Pro</h1>
+
+<div class="container">
+
+    <div class="solde-box">
+        <strong>Solde USD:</strong> <span id="usd">0</span> $
+        <br>
+        <strong>Solde CDF:</strong> <span id="cdf">0</span> CDF
+    </div>
+
+    <select id="operateur">
+        <option value="Airtel">Airtel</option>
+        <option value="M-Pesa">M-Pesa</option>
+    </select>
+
+    <select id="devise">
+        <option value="usd">USD</option>
+        <option value="cdf">CDF</option>
+    </select>
+
+    <input type="number" id="montant" placeholder="Montant">
+
+    <button class="depot" onclick="depot()">Déposer</button>
+    <button class="retrait" onclick="retrait()">Retirer</button>
+
+    <h3>Historique</h3>
+    <ul id="historique"></ul>
+
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("mobileData")) || {
+    usd: 0,
+    cdf: 0,
+    historique: []
+};
+
+function saveData() {
+    localStorage.setItem("mobileData", JSON.stringify(data));
+}
+
+function updateUI() {
+    document.getElementById("usd").innerText = data.usd;
+    document.getElementById("cdf").innerText = data.cdf;
+
+    let hist = document.getElementById("historique");
+    hist.innerHTML = "";
+    data.historique.forEach(item => {
+        let li = document.createElement("li");
+        li.innerText = item;
+        hist.appendChild(li);
+    });
+}
+
+function depot() {
+    let montant = parseInt(document.getElementById("montant").value);
+    let devise = document.getElementById("devise").value;
+    let operateur = document.getElementById("operateur").value;
+
+    if (!montant) return;
+
+    data[devise] += montant;
+    data.historique.unshift(`${operateur} Dépôt +${montant} (${devise.toUpperCase()})`);
+
+    saveData();
+    updateUI();
+}
+
+function retrait() {
+    let montant = parseInt(document.getElementById("montant").value);
+    let devise = document.getElementById("devise").value;
+    let operateur = document.getElementById("operateur").value;
+
+    if (!montant) return;
+
+    data[devise] -= montant;
+    data.historique.unshift(`${operateur} Retrait -${montant} (${devise.toUpperCase()})`);
+
+    saveData();
+    updateUI();
+}
+
+updateUI();
+</script>
+
+</body>
+      </html>
