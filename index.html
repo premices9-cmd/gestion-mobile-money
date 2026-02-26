@@ -20,6 +20,8 @@
         hr { border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0; }
         .solde-box { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stock-highlight { color: #2563eb; font-weight: bold; background: #dbeafe; padding: 2px 5px; border-radius: 4px; }
+        .change-box { background: #fff7ed; border: 1px solid #fdba74; padding: 10px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -46,22 +48,44 @@
 
             <hr>
 
-            <h2>Nouvelle Transaction</h2>
+            <div class="change-box">
+                <h2 style="margin-top:0; color:#9a3412">Calculateur de Change</h2>
+                <select id="changeMode">
+                    <option value="USDtoCDF">Vendre USD (Prendre $, donner FC)</option>
+                    <option value="CDFtoUSD">Acheter USD (Prendre FC, donner $)</option>
+                </select>
+                <div class="grid-inputs">
+                    <input type="number" id="changeAmount" placeholder="Montant USD">
+                    <input type="number" id="changeRate" placeholder="Taux (ex: 2850)">
+                </div>
+                <button onclick="executeChange()" style="background:#ea580c">Valider le Change</button>
+            </div>
+
+            <hr>
+
+            <h2>Nouvelle Transaction SIM</h2>
             <select id="operatorSelect"></select>
-            <select id="typeSelect"></select>
+            <select id="typeSelect" onchange="toggleStockInput()"></select>
+            
             <div class="grid-inputs">
                 <select id="currency">
                     <option value="USD">USD</option>
                     <option value="CDF">CDF</option>
                 </select>
-                <input type="number" id="amount" placeholder="Montant">
+                <input type="number" id="amount" placeholder="Montant (Argent)">
             </div>
+
+            <div id="stockInputContainer" class="hidden" style="background: #eff6ff; padding: 10px; border-radius: 8px; border: 1px solid #bfdbfe;">
+                <label style="font-size: 12px; color: #1e40af;">Quantité à retirer/ajouter au Stock :</label>
+                <input type="number" id="qteStock" placeholder="Ex: 50 unités">
+            </div>
+
             <input type="text" id="motif" placeholder="Motif (Optionnel)">
             <button onclick="addTransaction()" style="background: #10b981;">Valider la transaction</button>
 
             <hr>
 
-            <h2>Historique</h2>
+            <h2>Historique (10 derniers)</h2>
             <div id="history"></div>
 
             <div id="adminSection" class="hidden">
@@ -79,24 +103,23 @@
                 
                 <div id="operatorListAdmin"></div>
 
-                <h3>Types d'opération & Impact Stock</h3>
+                <h3>Types d'opération & Impact</h3>
                 <input type="text" id="newTypeName" placeholder="Nom (ex: Vente Unités)">
                 
-                <p style="font-size: 13px; margin-bottom: 0;">Impact Caisse & SIM :</p>
                 <div class="grid-inputs">
                     <select id="impactCaisse">
                         <option value="1">Caisse +</option>
                         <option value="-1">Caisse -</option>
-                        <option value="0">Aucun</option>
+                        <option value="0">Caisse 0</option>
                     </select>
                     <select id="impactOperateur">
                         <option value="-1">SIM -</option>
                         <option value="1">SIM +</option>
-                        <option value="0">Aucun</option>
+                        <option value="0">SIM 0</option>
                     </select>
                 </div>
 
-                <p style="font-size: 13px; margin-bottom: 0;">Impact sur le Stock (Unités) :</p>
+                <label style="font-size: 13px;">Impact sur le Stock (Quantité) :</label>
                 <select id="impactStock">
                     <option value="0">Ne touche pas au Stock</option>
                     <option value="-1">Diminue le Stock (-)</option>
@@ -138,6 +161,53 @@
 
         function logout() { location.reload(); }
 
+        // --- FONCTION DE CHANGE ---
+        function executeChange() {
+            let mode = document.getElementById("changeMode").value;
+            let usdAmount = parseFloat(document.getElementById("changeAmount").value);
+            let rate = parseFloat(document.getElementById("changeRate").value);
+
+            if(!usdAmount || !rate || usdAmount <= 0) {
+                alert("Veuillez saisir un montant et un taux valide.");
+                return;
+            }
+
+            let cdfAmount = usdAmount * rate;
+
+            if(mode === "USDtoCDF") {
+                // Je prends des USD (Caisse +), Je donne des CDF (Caisse -)
+                caisse.USD += usdAmount;
+                caisse.CDF -= cdfAmount;
+            } else {
+                // Je prends des CDF (Caisse +), Je donne des USD (Caisse -)
+                caisse.CDF += cdfAmount;
+                caisse.USD -= usdAmount;
+            }
+
+            transactions.unshift({
+                date: new Date().toLocaleString('fr-FR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short'}),
+                op: "CHANGE",
+                type: (mode === "USDtoCDF" ? "USD ➔ CDF" : "CDF ➔ USD"),
+                amt: usdAmount,
+                curr: "USD (Taux: " + rate + ")",
+                qte: 0
+            });
+
+            document.getElementById("changeAmount").value = "";
+            saveAll(); display();
+            alert("Change effectué : " + (mode === "USDtoCDF" ? "Sortie de " + cdfAmount + " FC" : "Sortie de " + usdAmount + " $"));
+        }
+
+        function toggleStockInput() {
+            let tyIdx = document.getElementById("typeSelect").value;
+            let ty = types[tyIdx];
+            if(ty && ty.impactStock !== 0) {
+                document.getElementById("stockInputContainer").classList.remove("hidden");
+            } else {
+                document.getElementById("stockInputContainer").classList.add("hidden");
+            }
+        }
+
         function addOperator() {
             let name = document.getElementById("newOperator").value;
             if(!name) return;
@@ -152,19 +222,19 @@
 
         function editOperator(i) {
             let op = operators[i];
-            let newUSD = prompt(`Solde USD:`, op.USD);
-            let newCDF = prompt(`Solde CDF:`, op.CDF);
-            let newStock = prompt(`Stock Unités:`, op.stock);
-            if(newUSD !== null && newCDF !== null && newStock !== null) {
-                operators[i].USD = parseFloat(newUSD);
-                operators[i].CDF = parseFloat(newCDF);
-                operators[i].stock = parseFloat(newStock);
+            let nUSD = prompt(`Solde USD:`, op.USD);
+            let nCDF = prompt(`Solde CDF:`, op.CDF);
+            let nStock = prompt(`Stock Unités:`, op.stock);
+            if(nUSD !== null && nCDF !== null && nStock !== null) {
+                operators[i].USD = parseFloat(nUSD);
+                operators[i].CDF = parseFloat(nCDF);
+                operators[i].stock = parseFloat(nStock);
                 saveAll(); display();
             }
         }
 
         function deleteOperator(index) {
-            if(confirm("Supprimer ?")) { operators.splice(index, 1); saveAll(); display(); }
+            if(confirm("Supprimer l'opérateur ?")) { operators.splice(index, 1); saveAll(); display(); }
         }
 
         function clearOpInputs() {
@@ -188,28 +258,28 @@
         }
 
         function deleteType(index) {
-            if(confirm("Supprimer ?")) { types.splice(index, 1); saveAll(); display(); }
+            if(confirm("Supprimer ce type ?")) { types.splice(index, 1); saveAll(); display(); }
         }
 
         function addTransaction() {
             let opIdx = document.getElementById("operatorSelect").value;
             let tyIdx = document.getElementById("typeSelect").value;
-            let amt = parseFloat(document.getElementById("amount").value);
+            let amt = parseFloat(document.getElementById("amount").value) || 0;
+            let qte = parseFloat(document.getElementById("qteStock").value) || 0;
             let curr = document.getElementById("currency").value;
 
-            if(operators.length === 0 || types.length === 0) { alert("Configurez les opérateurs et types."); return; }
-            if(isNaN(amt) || amt <= 0) { alert("Montant invalide"); return; }
+            if(operators.length === 0 || types.length === 0) { alert("Configurez d'abord Admin."); return; }
+            if(amt <= 0 && qte <= 0) { alert("Saisissez un montant ou une quantité."); return; }
 
             let op = operators[opIdx];
             let ty = types[tyIdx];
 
-            // MISE À JOUR AUTOMATIQUE
             caisse[curr] += (amt * ty.impactCaisse);
             op[curr] += (amt * ty.impactOperateur);
             
-            // ICI LE STOCK EST TOUCHÉ AUTOMATIQUEMENT
             if(ty.impactStock !== 0) {
-                op.stock += (amt * ty.impactStock);
+                let valStock = (qte !== 0) ? qte : amt;
+                op.stock += (valStock * ty.impactStock);
             }
 
             transactions.unshift({
@@ -217,11 +287,14 @@
                 op: op.name,
                 type: ty.name,
                 amt: amt,
-                curr: curr
+                curr: curr,
+                qte: qte
             });
 
             saveAll(); display();
             document.getElementById("amount").value = "";
+            document.getElementById("qteStock").value = "";
+            document.getElementById("stockInputContainer").classList.add("hidden");
         }
 
         function display() {
@@ -234,8 +307,8 @@
                 <div class="card">
                     <div class="card-content">
                         <div><strong>${op.name}</strong><br>
-                        <small>💰 ${op.USD}$ | ${op.CDF}FC</small><br>
-                        <small style="color:#2563eb">📦 Stock: ${op.stock} u.</small></div>
+                        <small>💰 ${op.USD.toLocaleString()}$ | ${op.CDF.toLocaleString()}FC</small><br>
+                        <small class="stock-highlight">📦 Stock: ${op.stock.toLocaleString()}</small></div>
                         <div class="actions">
                             ${role==='admin' ? `<button class="btn-edit" onclick="editOperator(${i})">Mod.</button>` : ''}
                             ${role==='admin' ? `<button class="btn-delete" onclick="deleteOperator(${i})">X</button>` : ''}
@@ -250,8 +323,8 @@
 
             let tyHtml = ""; let tyOptions = "";
             types.forEach((t, i) => {
-                let stockIcon = t.impactStock !== 0 ? "📦" : "";
-                tyHtml += `<div class="card card-content">${t.name} ${stockIcon} <button class="btn-delete" onclick="deleteType(${i})">X</button></div>`;
+                let stockTag = t.impactStock !== 0 ? " <small>(📦 Stock)</small>" : "";
+                tyHtml += `<div class="card card-content">${t.name}${stockTag} <button class="btn-delete" onclick="deleteType(${i})">X</button></div>`;
                 tyOptions += `<option value="${i}">${t.name}</option>`;
             });
             document.getElementById("typeList").innerHTML = tyHtml;
@@ -259,7 +332,7 @@
 
             document.getElementById("history").innerHTML = transactions.slice(0,10).map(t => 
                 `<div style="font-size:13px; border-bottom:1px solid #eee; padding:8px; color:#334155">
-                    ${t.date} | <b>${t.type}</b> ${t.op}: <b>${t.amt} ${t.curr}</b>
+                    ${t.date} | <b>${t.type}</b> ${t.op}: <b>${t.amt.toLocaleString()} ${t.curr}</b> ${t.qte > 0 ? `| <small>📦 Qte: ${t.qte}</small>` : ''}
                 </div>`
             ).join("");
         }
