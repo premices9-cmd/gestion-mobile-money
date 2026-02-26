@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro - Cloud Business</title>
+    <title>MKA Pro - Gestion Intégrale</title>
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10149/10149458.png">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; margin: 0; color: white; padding-bottom: 50px; }
@@ -14,17 +14,18 @@
         .hidden { display: none !important; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .admin-box { border: 2px solid #ef4444; padding: 15px; border-radius: 12px; margin-top: 20px; background: #fff1f2; }
+        .admin-box { border: 2px solid #ef4444; padding: 15px; border-radius: 12px; margin-top: 20px; background: #fff1f2; color: #991b1b; }
         .change-box { background: #e0f2fe; border: 2px solid #0284c7; padding: 12px; border-radius: 12px; margin: 15px 0; color: #0369a1; }
         .label-sm { font-size: 11px; font-weight: bold; color: #64748b; margin-top: 5px; display: block; }
         .btn-del { background: #dc2626; padding: 5px 10px; font-size: 12px; width: auto; }
         .flex-row { display: flex; justify-content: space-between; align-items: center; }
         .taux-badge { background: #facc15; color: black; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; }
+        .dette-card { border-left: 5px solid #dc2626; background: #fef2f2; }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; padding: 10px;">MKA Pro : Cloud Edition</h1>
+    <h1 style="text-align:center; padding: 10px;">MKA Pro : Business Cloud</h1>
 
     <div class="container">
         <div id="loginSection">
@@ -50,50 +51,27 @@
             <div id="operatorBalances"></div>
 
             <div class="change-box">
-                <h3 style="margin:0 0 10px 0; text-align:center">🔄 Change & Transfert</h3>
-                
+                <h3 style="margin:0 0 10px 0; text-align:center">🔄 Transfert & Change</h3>
                 <label class="label-sm">SOURCE (D'où sort l'argent ?)</label>
                 <select id="srcWallet"></select>
-                
                 <div class="grid-2">
-                    <div>
-                        <label class="label-sm">MONTANT SORTIE</label>
-                        <input type="number" id="srcAmt" placeholder="0.00" oninput="calcDest()">
-                    </div>
-                    <div>
-                        <label class="label-sm">DEVISE</label>
-                        <select id="srcCurr" onchange="calcDest()">
-                            <option value="USD">USD</option>
-                            <option value="CDF">CDF</option>
-                        </select>
-                    </div>
+                    <input type="number" id="srcAmt" placeholder="Montant" oninput="calcDest()">
+                    <select id="srcCurr" onchange="calcDest()"><option value="USD">USD</option><option value="CDF">CDF</option></select>
                 </div>
-
                 <label class="label-sm">DESTINATION (Où va l'argent ?)</label>
                 <select id="destWallet"></select>
-
                 <div class="grid-2">
-                    <div>
-                        <label class="label-sm">MONTANT REÇU</label>
-                        <input type="number" id="destAmt" style="background:#f1f5f9" readonly>
-                    </div>
-                    <div>
-                        <label class="label-sm">DEVISE REÇUE</label>
-                        <select id="destCurr" onchange="calcDest()">
-                            <option value="CDF">CDF</option>
-                            <option value="USD">USD</option>
-                        </select>
-                    </div>
+                    <input type="number" id="destAmt" style="background:#cbd5e1" readonly>
+                    <select id="destCurr" onchange="calcDest()"><option value="CDF">CDF</option><option value="USD">USD</option></select>
                 </div>
-
-                <button onclick="executeGlobalChange()" style="background:#0284c7; width:100%; margin-top:10px; font-size:16px">CONFIRMER LE TRANSFERT</button>
+                <button onclick="executeGlobalChange()" style="background:#0284c7; width:100%; margin-top:10px;">CONFIRMER TRANSFERT</button>
             </div>
 
             <hr>
             <h2>Nouvelle Opération</h2>
             <div class="grid-2">
-                <select id="operatorSelect"></select>
-                <select id="typeSelect"></select>
+                <div><label class="label-sm">SIM UTILISÉE</label><select id="operatorSelect"></select></div>
+                <div><label class="label-sm">TYPE D'OPÉRATION</label><select id="typeSelect"></select></div>
             </div>
             
             <div class="grid-2">
@@ -101,61 +79,68 @@
                 <select id="currency"><option value="USD">USD</option><option value="CDF">CDF</option></select>
             </div>
 
-            <label class="label-sm">PAIEMENT CLIENT</label>
+            <label class="label-sm">PAIEMENT DU CLIENT</label>
             <select id="paymentSource" onchange="togglePaymentSim()">
-                <option value="cash">Paiement CASH</option>
-                <option value="virtuel">Paiement SIM</option>
+                <option value="cash">Paiement CASH (Tiroir)</option>
+                <option value="virtuel">Paiement par SIM (Virtuel)</option>
+                <option value="dette">À CRÉDIT (Créer une dette)</option>
             </select>
             
             <div id="paymentSimContainer" class="hidden" style="background: #f0fdf4; padding: 10px; border-radius: 8px;">
+                <label class="label-sm">SIM QUI REÇOIT L'ARGENT :</label>
                 <select id="paymentSimSelect"></select>
             </div>
 
-            <input type="text" id="motif" placeholder="Référence / Client">
+            <input type="text" id="motif" placeholder="Nom du client / Référence">
             <button onclick="addTransaction()" style="background: #10b981; width: 100%; margin-top: 10px;">VALIDER L'OPÉRATION</button>
 
             <hr>
+            <h3>Dettes Actives</h3>
+            <div id="dettesList"></div>
+
+            <hr>
+            <h3>Historique Récent</h3>
             <div id="history"></div>
-            <button id="btnVoirTout" onclick="toggleFullHistory()" style="background:#64748b; width:100%;">Historique complet</button>
+            <button id="btnVoirTout" onclick="toggleFullHistory()" style="background:#64748b; width:100%;">Voir l'historique complet</button>
 
             <div id="adminSection" class="hidden">
                 <div class="admin-box">
                     <h2 style="color:#b91c1c; margin-top:0">🔧 Administration</h2>
                     
-                    <div style="background: white; padding:10px; border-radius:8px; margin-bottom:15px;">
+                    <div style="background: white; padding:10px; border-radius:8px; margin-bottom:15px; color:black">
                         <h4>💰 Configuration Taux</h4>
-                        <input type="number" id="newTaux" placeholder="Nouveau taux (ex: 2800)">
+                        <input type="number" id="newTaux" placeholder="Nouveau taux (ex: 2850)">
                         <button onclick="updateTaux()" style="background:#0f172a; width:100%">Mettre à jour</button>
                     </div>
 
-                    <div style="background: white; padding:10px; border-radius:8px; margin-bottom:15px;">
-                        <h4>➕ Nouvelle SIM</h4>
-                        <input type="text" id="newOpName" placeholder="Nom SIM">
+                    <div style="background: white; padding:10px; border-radius:8px; margin-bottom:15px; color:black">
+                        <h4>➕ Nouvelle SIM (Opérateur)</h4>
+                        <input type="text" id="newOpName" placeholder="Nom SIM (ex: M-Pesa)">
                         <div class="grid-3">
                             <input type="number" id="initUSD" placeholder="USD">
                             <input type="number" id="initCDF" placeholder="CDF">
                             <input type="number" id="initStock" placeholder="Stock">
                         </div>
-                        <button onclick="addOperator()" style="background:#b91c1c; width:100%">Créer</button>
+                        <button onclick="addOperator()" style="background:#b91c1c; width:100%">Créer l'Opérateur</button>
                     </div>
 
-                    <div style="background: white; padding:10px; border-radius:8px; margin-bottom:15px;">
+                    <div style="background: white; padding:10px; border-radius:8px; margin-bottom:15px; color:black">
                         <h4>⚙️ Créer Type d'Opération</h4>
-                        <input type="text" id="newTypeName" placeholder="Nom">
+                        <input type="text" id="newTypeName" placeholder="Nom (ex: Vente Crédit)">
                         <div class="grid-3">
-                            <div><label class="label-sm">SIM</label>
-                            <select id="impO"><option value="0">0</option><option value="1">+</option><option value="-1">-</option></select></div>
-                            <div><label class="label-sm">Stock</label>
-                            <select id="impS"><option value="0">0</option><option value="1">+</option><option value="-1">-</option></select></div>
-                            <div><label class="label-sm">Caisse</label>
-                            <select id="impC"><option value="0">0</option><option value="1">+</option><option value="-1">-</option></select></div>
+                            <div><label class="label-sm">Impact SIM</label>
+                            <select id="impO"><option value="0">Aucun</option><option value="1">Ajoute (+)</option><option value="-1">Retire (-)</option></select></div>
+                            <div><label class="label-sm">Impact Stock</label>
+                            <select id="impS"><option value="0">Aucun</option><option value="1">Ajoute (+)</option><option value="-1">Retire (-)</option></select></div>
+                            <div><label class="label-sm">Impact Caisse</label>
+                            <select id="impC"><option value="0">Aucun</option><option value="1">Ajoute (+)</option><option value="-1">Retire (-)</option></select></div>
                         </div>
-                        <button onclick="addType()" style="background:#b91c1c; width:100%; margin-top:10px">Ajouter</button>
+                        <button onclick="addType()" style="background:#b91c1c; width:100%; margin-top:10px">Ajouter le Type</button>
                     </div>
 
-                    <div id="adminOpList"></div>
+                    <div id="adminOpList" style="color:black"></div>
                     <hr>
-                    <div id="adminTypeList"></div>
+                    <div id="adminTypeList" style="color:black"></div>
                 </div>
             </div>
         </div>
@@ -174,7 +159,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let data = { caisse: {USD:0, CDF:0}, operators: [], types: [], transactions: [], taux: 2800 };
+        let data = { caisse: {USD:0, CDF:0}, operators: [], types: [], transactions: [], dettes: [], taux: 2800 };
         let showFull = false;
 
         onValue(ref(db, 'mka_data'), (snap) => {
@@ -182,6 +167,8 @@
                 data = snap.val();
                 if(!data.taux) data.taux = 2800;
                 if(!data.operators) data.operators = [];
+                if(!data.dettes) data.dettes = [];
+                if(!data.transactions) data.transactions = [];
                 render();
             }
         });
@@ -206,59 +193,35 @@
             if(t > 0) { data.taux = t; saveData(); alert("Taux mis à jour"); }
         };
 
-        // CALCUL AUTOMATIQUE DU CHANGE DANS LE MODULE DE TRANSFERT
         window.calcDest = () => {
             const amt = parseFloat(document.getElementById("srcAmt").value) || 0;
             const sCurr = document.getElementById("srcCurr").value;
             const dCurr = document.getElementById("destCurr").value;
-            let result = amt;
-
-            if(sCurr === "USD" && dCurr === "CDF") result = amt * data.taux;
-            else if(sCurr === "CDF" && dCurr === "USD") result = amt / data.taux;
-
-            document.getElementById("destAmt").value = result.toFixed(sCurr === dCurr ? 0 : 2);
+            let res = amt;
+            if(sCurr === "USD" && dCurr === "CDF") res = amt * data.taux;
+            else if(sCurr === "CDF" && dCurr === "USD") res = amt / data.taux;
+            document.getElementById("destAmt").value = res.toFixed(sCurr === dCurr ? 0 : 2);
         };
 
-        // EXECUTION DU TRANSFERT / CHANGE UNIVERSEL
         window.executeGlobalChange = () => {
-            const srcIdx = document.getElementById("srcWallet").value; // "caisse" ou index SIM
-            const destIdx = document.getElementById("destWallet").value;
+            const sIdx = document.getElementById("srcWallet").value;
+            const dIdx = document.getElementById("destWallet").value;
             const sAmt = parseFloat(document.getElementById("srcAmt").value);
             const dAmt = parseFloat(document.getElementById("destAmt").value);
             const sCurr = document.getElementById("srcCurr").value;
             const dCurr = document.getElementById("destCurr").value;
 
-            if(!sAmt || sAmt <= 0) return alert("Montant invalide");
+            if(!sAmt) return alert("Montant vide");
 
-            // Sortie de la source
-            if(srcIdx === "caisse") {
-                data.caisse[sCurr] -= sAmt;
-            } else {
-                data.operators[parseInt(srcIdx)][sCurr] -= sAmt;
-            }
+            if(sIdx === "caisse") data.caisse[sCurr] -= sAmt;
+            else data.operators[sIdx][sCurr] -= sAmt;
 
-            // Entrée dans la destination
-            if(destIdx === "caisse") {
-                data.caisse[dCurr] += dAmt;
-            } else {
-                data.operators[parseInt(destIdx)][dCurr] += dAmt;
-            }
+            if(dIdx === "caisse") data.caisse[dCurr] += dAmt;
+            else data.operators[dIdx][dCurr] += dAmt;
 
-            const srcName = srcIdx === "caisse" ? "Caisse" : data.operators[srcIdx].name;
-            const destName = destIdx === "caisse" ? "Caisse" : data.operators[destIdx].name;
-
-            data.transactions.unshift({
-                date: new Date().toLocaleString(),
-                desc: `TRANSFERT/CHANGE`,
-                amt: sAmt,
-                curr: sCurr,
-                motif: `${srcName} (${sAmt}${sCurr}) ➔ ${destName} (${dAmt}${dCurr})`
-            });
-
+            data.transactions.unshift({ date: new Date().toLocaleString(), desc: "TRANSFERT/CHANGE", amt: sAmt, curr: sCurr, motif: `De ${sIdx} vers ${dIdx}` });
             saveData();
-            alert("Transfert effectué !");
-            document.getElementById("srcAmt").value = "";
-            document.getElementById("destAmt").value = "";
+            alert("Transfert effectué");
         };
 
         window.addTransaction = () => {
@@ -267,42 +230,61 @@
             const amt = parseFloat(document.getElementById("amount").value) || 0;
             const curr = document.getElementById("currency").value;
             const payMode = document.getElementById("paymentSource").value;
+            const refNom = document.getElementById("motif").value;
 
+            if(!data.types[tyIdx]) return alert("Type invalide");
             const ty = data.types[tyIdx];
             const op = data.operators[opIdx];
 
+            // 1. Impact sur la SIM (Solde et Stock)
             op[curr] += (amt * ty.impO);
             op.stock += (amt * ty.impS);
 
+            // 2. Gestion du Paiement (Caisse, SIM ou Dette)
             if(payMode === "cash") {
                 data.caisse[curr] += (amt * ty.impC);
-            } else {
+            } 
+            else if(payMode === "virtuel") {
                 const payOpIdx = document.getElementById("paymentSimSelect").value;
-                data.operators[payOpIdx][curr] += amt;
+                data.operators[payOpIdx][curr] += (amt * ty.impC);
+            } 
+            else if(payMode === "dette") {
+                if(!refNom) return alert("Nom du client obligatoire pour une dette");
+                data.dettes.push({ nom: refNom, amt: amt, curr: curr, date: new Date().toLocaleDateString() });
             }
 
-            data.transactions.unshift({ date: new Date().toLocaleString(), desc: `${ty.name} | ${op.name}`, amt: amt, curr: curr, motif: document.getElementById("motif").value });
+            data.transactions.unshift({ date: new Date().toLocaleString(), desc: `${ty.name} | ${op.name}`, amt: amt, curr: curr, motif: (payMode==="dette"?"DETTE: ":"")+refNom });
             saveData();
-            alert("Enregistré");
+            alert("Enregistré avec succès !");
         };
 
         window.addOperator = () => {
             const n = document.getElementById("newOpName").value;
             if(!n) return;
-            data.operators.push({ name: n, USD: parseFloat(document.getElementById("initUSD").value)||0, CDF: parseFloat(document.getElementById("initCDF").value)||0, stock: parseFloat(document.getElementById("initStock").value)||0 });
+            data.operators.push({ 
+                name: n, 
+                USD: parseFloat(document.getElementById("initUSD").value)||0, 
+                CDF: parseFloat(document.getElementById("initCDF").value)||0, 
+                stock: parseFloat(document.getElementById("initStock").value)||0 
+            });
             saveData();
         };
 
         window.addType = () => {
             const n = document.getElementById("newTypeName").value;
             if(!n) return;
-            data.types.push({ name: n, impO: parseInt(document.getElementById("impO").value), impS: parseInt(document.getElementById("impS").value), impC: parseInt(document.getElementById("impC").value) });
+            data.types.push({ 
+                name: n, 
+                impO: parseInt(document.getElementById("impO").value), 
+                impS: parseInt(document.getElementById("impS").value), 
+                impC: parseInt(document.getElementById("impC").value) 
+            });
             saveData();
         };
 
         window.deleteOp = (i) => { if(confirm("Supprimer?")) { data.operators.splice(i,1); saveData(); }};
         window.deleteType = (i) => { if(confirm("Supprimer?")) { data.types.splice(i,1); saveData(); }};
-        window.togglePaymentSim = () => document.getElementById("paymentSimContainer").classList.toggle("hidden", document.getElementById("paymentSource").value === "cash");
+        window.togglePaymentSim = () => document.getElementById("paymentSimContainer").classList.toggle("hidden", document.getElementById("paymentSource").value !== "virtuel");
         window.toggleFullHistory = () => { showFull = !showFull; render(); };
 
         function render() {
@@ -311,16 +293,13 @@
             document.getElementById("caisseCDF").innerText = data.caisse.CDF.toLocaleString();
             document.getElementById("displayTaux").innerText = data.taux.toLocaleString();
 
-            let opH = "", opOpt = '<option value="caisse">Caisse Cash</option>', adminOpH = "";
-            let opSelectOnly = ""; // Pour les transactions normales
-
+            let opH = "", opOpt = '<option value="caisse">Caisse Cash</option>', adminOpH = "", opSelectOnly = "";
             data.operators.forEach((o, i) => {
                 opH += `<div class="card"><strong>${o.name}</strong><br>${o.USD}$ | ${o.CDF}FC | Stock: ${o.stock}</div>`;
                 opOpt += `<option value="${i}">${o.name}</option>`;
                 opSelectOnly += `<option value="${i}">${o.name}</option>`;
                 adminOpH += `<div class="flex-row"><span>${o.name}</span><button class="btn-del" onclick="deleteOp(${i})">X</button></div>`;
             });
-            
             document.getElementById("operatorBalances").innerHTML = opH;
             document.getElementById("srcWallet").innerHTML = opOpt;
             document.getElementById("destWallet").innerHTML = opOpt;
@@ -328,7 +307,7 @@
             document.getElementById("paymentSimSelect").innerHTML = opSelectOnly;
             document.getElementById("adminOpList").innerHTML = adminOpH;
 
-            let tyOpt = ""; let adminTyH = "";
+            let tyOpt = "", adminTyH = "";
             data.types.forEach((t, i) => {
                 tyOpt += `<option value="${i}">${t.name}</option>`;
                 adminTyH += `<div class="flex-row"><span>${t.name}</span><button class="btn-del" onclick="deleteType(${i})">X</button></div>`;
@@ -336,8 +315,10 @@
             document.getElementById("typeSelect").innerHTML = tyOpt;
             document.getElementById("adminTypeList").innerHTML = adminTyH;
 
+            document.getElementById("dettesList").innerHTML = data.dettes.map(d => `<div class="card dette-card"><b>${d.nom}</b>: ${d.amt} ${d.curr} (${d.date})</div>`).join("") || "Aucune dette";
+
             const list = showFull ? data.transactions : data.transactions.slice(0, 10);
-            document.getElementById("history").innerHTML = list.map(t => `<div class="card" style="font-size:12px"><b>${t.date}</b><br>${t.desc}: ${t.amt} ${t.curr}<br><small>${t.motif || ""}</small></div>`).join("");
+            document.getElementById("history").innerHTML = list.map(t => `<div class="card" style="font-size:12px"><b>${t.date}</b><br>${t.desc}: ${t.amt} ${t.curr}</div>`).join("");
         }
     </script>
 </body>
