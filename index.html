@@ -3,82 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro - Système Intégral</title>
+    <title>MKA Pro - Finance Intégrale</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; margin: 0; color: white; padding-bottom: 50px; }
-        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; font-size: 15px; }
-        button { cursor: pointer; background: #0f172a; color: white; font-weight: bold; border: none; }
+        button { cursor: pointer; background: #0f172a; color: white; font-weight: bold; border: none; transition: 0.3s; }
+        button:hover { opacity: 0.9; transform: scale(0.98); }
         .card { background: #f8fafc; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 5px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .hidden { display: none !important; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        
+        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; border: 2px solid #facc15; }
+        .vnc-val { font-size: 32px; font-weight: bold; color: #facc15; }
+        
+        .change-box { background: #f0f9ff; border: 2px solid #0ea5e9; padding: 12px; border-radius: 12px; margin: 15px 0; }
         .admin-box { border: 2px solid #ef4444; padding: 15px; border-radius: 12px; margin-top: 20px; background: #fff1f2; color: #991b1b; }
-        .change-box { background: #e0f2fe; border: 2px solid #0284c7; padding: 12px; border-radius: 12px; margin: 15px 0; color: #0369a1; }
-        .depense-box { background: #fef2f2; border: 2px solid #ef4444; padding: 12px; border-radius: 12px; margin: 15px 0; color: #991b1b; }
-        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; margin-top: 5px; display: block; }
-        .taux-badge { background: #facc15; color: black; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; }
-        .badge-rouge { background: #dc2626; color: white; padding: 2px 5px; border-radius: 4px; font-size: 10px; }
-        .badge-vert { background: #16a34a; color: white; padding: 2px 5px; border-radius: 4px; font-size: 10px; }
+        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; margin-top: 5px; display: block; text-transform: uppercase; }
+        .badge-dette { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; padding: 10px;">MKA Pro Business</h1>
+    <h1 style="text-align:center; padding: 15px;">MKA Pro Business</h1>
 
     <div class="container">
         <div id="loginSection">
-            <h2>Connexion</h2>
+            <h2 style="text-align:center">Connexion</h2>
             <input type="password" id="pinInput" placeholder="Code PIN">
-            <button onclick="login()" style="width:100%">Ouvrir la session</button>
+            <button onclick="login()" style="width:100%; padding: 15px;">OUVRIR LA SESSION</button>
         </div>
 
         <div id="appSection" class="hidden">
-            <div class="flex-row" style="display:flex; justify-content:space-between; align-items:center">
-                <button onclick="logout()" style="background:#64748b; width:auto">Déconnexion</button>
+            <div class="vnc-box">
+                <span style="font-size: 12px; opacity: 0.8;">VALEUR NETTE COMPTABLE (VNC)</span><br>
+                <div class="vnc-val" id="totalVNC">0.00 $</div>
+                <div style="font-size: 11px; margin-top: 5px;">(Cash + SIMs + [Stock × Prix Achat] - Dettes)</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <button onclick="logout()" style="background:#ef4444; width:auto; padding:8px 15px;">Déconnexion</button>
                 <div style="text-align:right">
-                    <strong>Tiroir :</strong><br>
-                    <span id="caisseUSD">0</span> $ | <span id="caisseCDF">0</span> FC
+                    <strong>Tiroir Cash :</strong><br>
+                    <span id="caisseUSD" style="color:#16a34a; font-weight:bold">0</span> $ | <span id="caisseCDF" style="color:#16a34a; font-weight:bold">0</span> FC
                 </div>
             </div>
 
-            <div style="text-align: center; margin: 10px 0;">
-                <span class="taux-badge">Taux : 1$ = <span id="displayTaux">...</span> FC</span>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <span style="background:#facc15; color:black; padding:8px 20px; border-radius:25px; font-weight:bold;">Taux : 1$ = <span id="displayTaux">0</span> FC</span>
             </div>
 
-            <h3>Soldes SIM & Stocks</h3>
+            <h3>Balances des SIMs</h3>
             <div id="operatorBalances"></div>
 
             <div class="change-box">
-                <h4 style="margin:0 0 10px 0">🔄 Change & Transfert</h4>
+                <h4 style="margin:0 0 10px 0; color:#0369a1;">🔄 Change & Transfert SIM</h4>
                 <label class="label-sm">SOURCE</label>
                 <select id="srcWallet" onchange="calcDest()"></select>
+                
                 <div class="grid-2">
                     <input type="number" id="srcAmt" placeholder="Montant" oninput="calcDest()">
                     <select id="srcCurr" onchange="calcDest()"><option value="USD">USD</option><option value="CDF">CDF</option></select>
                 </div>
+
                 <label class="label-sm">DESTINATION</label>
                 <select id="destWallet"></select>
+                
                 <div class="grid-2">
-                    <input type="number" id="destAmt" readonly style="background:#f1f5f9">
+                    <input type="number" id="destAmt" readonly style="background:#e2e8f0; font-weight:bold;" placeholder="Résultat">
                     <select id="destCurr" onchange="calcDest()"><option value="CDF">CDF</option><option value="USD">USD</option></select>
                 </div>
-                <button onclick="executeGlobalChange()" style="background:#0284c7; width:100%">Valider le Transfert</button>
-            </div>
-
-            <div class="depense-box">
-                <h4 style="margin:0 0 10px 0">💸 Enregistrer une Dépense</h4>
-                <select id="expSource"></select>
-                <div class="grid-2">
-                    <input type="number" id="expAmt" placeholder="Montant">
-                    <select id="expCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select>
-                </div>
-                <input type="text" id="expMotif" placeholder="Motif (ex: Transport)">
-                <button onclick="addExpense()" style="background:#dc2626; width:100%">Enregistrer Dépense</button>
+                <button onclick="executeGlobalChange()" style="background:#0ea5e9; width:100%; margin-top:10px;">VALIDER LE MOUVEMENT</button>
             </div>
 
             <hr>
-            <h2>Opérations Clients</h2>
+            <h2>Nouvelle Opération</h2>
             <div class="grid-2">
                 <select id="operatorSelect"></select>
                 <select id="typeSelect"></select>
@@ -91,21 +91,20 @@
             <label class="label-sm">MODE DE RÈGLEMENT :</label>
             <select id="payMode" onchange="togglePaySim()">
                 <option value="cash">Paiement Cash (Tiroir)</option>
-                <option value="virtuel">Paiement via SIM</option>
-                <option value="dette_client">Le client me doit (Crédit)</option>
-                <option value="dette_moi">Je dois au client (Retrait impayé)</option>
+                <option value="virtuel">Via une autre SIM</option>
+                <option value="dette_client">Dette (Le client me doit)</option>
+                <option value="dette_moi">Crédit (Je dois au client)</option>
             </select>
             
             <div id="paySimBox" class="hidden">
-                <label class="label-sm">SIM QUI REÇOIT/PAYE :</label>
+                <label class="label-sm">SIM UTILISÉE POUR PAYER :</label>
                 <select id="paySimSelect"></select>
             </div>
-
-            <input type="text" id="motif" placeholder="Nom du Client / Référence">
-            <button onclick="addTransaction()" style="background:#16a34a; width:100%; margin-top:10px">VALIDER OPÉRATION</button>
+            <input type="text" id="motif" placeholder="Nom du Client / Motif">
+            <button onclick="addTransaction()" style="background:#16a34a; width:100%; margin-top:10px; height:45px;">VALIDER L'OPÉRATION</button>
 
             <hr>
-            <h3>Dettes & Crédits</h3>
+            <h3>Gestion des Dettes</h3>
             <div id="dettesList"></div>
 
             <hr>
@@ -114,26 +113,28 @@
 
             <div id="adminSection" class="hidden">
                 <div class="admin-box">
-                    <h2 style="margin-top:0">🔧 Administration</h2>
-                    
-                    <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; color:black">
-                        <h4>Mettre à jour le Taux</h4>
-                        <input type="number" id="newTaux" placeholder="Nouveau taux">
-                        <button onclick="updateTaux()" style="width:100%">Enregistrer Taux</button>
+                    <h2 style="margin:0;">🔧 Configuration Système</h2>
+                    <div style="background:white; padding:10px; border-radius:8px; margin:10px 0; color:black;">
+                        <h4>Taux Global</h4>
+                        <input type="number" id="newTaux" placeholder="Ex: 2850">
+                        <button onclick="updateTaux()" style="width:100%">Mettre à jour le taux</button>
                     </div>
 
-                    <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; color:black">
-                        <h4>Ajouter une SIM</h4>
-                        <input type="text" id="newOpName" placeholder="Nom SIM">
-                        <div class="grid-3">
-                            <input type="number" id="initUSD" placeholder="USD">
-                            <input type="number" id="initCDF" placeholder="CDF">
-                            <input type="number" id="initStock" placeholder="Stock">
+                    <div style="background:white; padding:10px; border-radius:8px; margin:10px 0; color:black;">
+                        <h4>Nouvelle SIM & Prix Stock</h4>
+                        <input type="text" id="newOpName" placeholder="Nom (Airtel, Orange...)">
+                        <div class="grid-2">
+                            <input type="number" id="initUSD" placeholder="Solde USD">
+                            <input type="number" id="initCDF" placeholder="Solde CDF">
+                        </div>
+                        <div class="grid-2">
+                            <input type="number" id="initStock" placeholder="Qte Stock">
+                            <input type="number" id="initPrice" placeholder="Prix Achat Unité ($)">
                         </div>
                         <button onclick="addOperator()" style="width:100%; background:#b91c1c">Créer SIM</button>
                     </div>
 
-                    <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; color:black">
+                    <div style="background:white; padding:10px; border-radius:8px; margin:10px 0; color:black;">
                         <h4>Types d'Opérations</h4>
                         <input type="text" id="newTypeName" placeholder="Nom (ex: Dépôt)">
                         <div class="grid-3">
@@ -141,12 +142,9 @@
                             <select id="impS"><option value="0">Stk: 0</option><option value="1">Stk: +</option><option value="-1">Stk: -</option></select>
                             <select id="impC"><option value="0">Csh: 0</option><option value="1">Csh: +</option><option value="-1">Csh: -</option></select>
                         </div>
-                        <button onclick="addType()" style="width:100%; background:#b91c1c">Ajouter Type</button>
+                        <button onclick="addType()" style="width:100%; background:#b91c1c; margin-top:5px">Ajouter Type</button>
                     </div>
-
                     <div id="adminOpList" style="color:black"></div>
-                    <hr>
-                    <div id="adminTypeList" style="color:black"></div>
                 </div>
             </div>
         </div>
@@ -180,21 +178,6 @@
 
         const save = () => set(ref(db, 'mka_data'), data);
 
-        window.login = () => {
-            const pin = document.getElementById("pinInput").value;
-            if(pin === "1234") {
-                document.getElementById("loginSection").classList.add("hidden");
-                document.getElementById("appSection").classList.remove("hidden");
-                document.getElementById("adminSection").classList.remove("hidden");
-            } else if(pin === "0000") {
-                document.getElementById("loginSection").classList.add("hidden");
-                document.getElementById("appSection").classList.remove("hidden");
-            } else { alert("PIN Erroné"); }
-            render();
-        };
-
-        window.logout = () => location.reload();
-
         window.calcDest = () => {
             const amt = parseFloat(document.getElementById("srcAmt").value) || 0;
             const sc = document.getElementById("srcCurr").value;
@@ -202,7 +185,7 @@
             let res = amt;
             if(sc === "USD" && dc === "CDF") res = amt * data.taux;
             else if(sc === "CDF" && dc === "USD") res = amt / data.taux;
-            document.getElementById("destAmt").value = res.toFixed(sc === dc ? 0 : 2);
+            document.getElementById("destAmt").value = res.toFixed(2);
         };
 
         window.executeGlobalChange = () => {
@@ -213,23 +196,12 @@
             const sc = document.getElementById("srcCurr").value;
             const dc = document.getElementById("destCurr").value;
 
-            if(!sAmt) return;
+            if(!sAmt || sAmt <= 0) return alert("Saisir un montant");
             if(sIdx === "caisse") data.caisse[sc] -= sAmt; else data.operators[sIdx][sc] -= sAmt;
             if(dIdx === "caisse") data.caisse[dc] += dAmt; else data.operators[dIdx][dc] += dAmt;
 
-            data.transactions.unshift({ date: new Date().toLocaleString(), desc: "TRANSFERT", amt: sAmt, curr: sc });
-            save(); alert("Effectué");
-        };
-
-        window.addExpense = () => {
-            const sIdx = document.getElementById("expSource").value;
-            const amt = parseFloat(document.getElementById("expAmt").value);
-            const curr = document.getElementById("expCurr").value;
-            const mot = document.getElementById("expMotif").value;
-            if(!amt || !mot) return alert("Remplissez tout");
-            if(sIdx === "caisse") data.caisse[curr] -= amt; else data.operators[sIdx][curr] -= amt;
-            data.transactions.unshift({ date: new Date().toLocaleString(), desc: "DÉPENSE: "+mot, amt: -amt, curr: curr });
-            save(); alert("Dépense notée");
+            data.transactions.unshift({ date: new Date().toLocaleString(), desc: "MOUVEMENT INTERNE", amt: sAmt, curr: sc });
+            save(); alert("Transfert effectué");
         };
 
         window.addTransaction = () => {
@@ -240,6 +212,7 @@
             const mode = document.getElementById("payMode").value;
             const cli = document.getElementById("motif").value;
 
+            if(!data.types[tyI]) return alert("Configurez les types d'opérations");
             const ty = data.types[tyI];
             const op = data.operators[opI];
 
@@ -252,67 +225,100 @@
                 const pI = document.getElementById("paySimSelect").value;
                 data.operators[pI][cur] += (amt * ty.impC);
             } else {
-                if(!cli) return alert("Nom client obligatoire");
+                if(!cli) return alert("Nom du client requis");
                 data.dettes.push({ nom: cli, amt: amt, curr: cur, type: mode, date: new Date().toLocaleDateString() });
             }
 
-            data.transactions.unshift({ date: new Date().toLocaleString(), desc: ty.name + " | " + op.name, amt: amt, curr: cur, motif: cli });
-            save(); alert("Opération terminée");
+            data.transactions.unshift({ date: new Date().toLocaleString(), desc: ty.name + " (" + op.name + ")", amt: amt, curr: cur, motif: cli });
+            save(); alert("Succès !");
         };
 
-        window.reglerDette = (i) => { data.dettes.splice(i,1); save(); };
-        window.updateTaux = () => { data.taux = parseFloat(document.getElementById("newTaux").value); save(); };
+        window.reglerDette = (i) => { if(confirm("Régler cette dette ?")) { data.dettes.splice(i,1); save(); } };
+        window.updateTaux = () => { data.taux = parseFloat(document.getElementById("newTaux").value); save(); alert("Taux mis à jour"); };
+        
         window.addOperator = () => {
             const n = document.getElementById("newOpName").value;
-            data.operators.push({ name: n, USD: parseFloat(document.getElementById("initUSD").value)||0, CDF: parseFloat(document.getElementById("initCDF").value)||0, stock: parseFloat(document.getElementById("initStock").value)||0 });
-            save();
+            const p = parseFloat(document.getElementById("initPrice").value) || 0;
+            if(!n) return alert("Nom manquant");
+            data.operators.push({ 
+                name: n, 
+                USD: parseFloat(document.getElementById("initUSD").value)||0, 
+                CDF: parseFloat(document.getElementById("initCDF").value)||0, 
+                stock: parseFloat(document.getElementById("initStock").value)||0,
+                unitPrice: p 
+            });
+            save(); alert("SIM créée");
         };
+
         window.addType = () => {
             const n = document.getElementById("newTypeName").value;
             data.types.push({ name: n, impO: parseInt(document.getElementById("impO").value), impS: parseInt(document.getElementById("impS").value), impC: parseInt(document.getElementById("impC").value) });
-            save();
+            save(); alert("Type ajouté");
         };
-        window.delOp = (i) => { data.operators.splice(i,1); save(); };
-        window.delTy = (i) => { data.types.splice(i,1); save(); };
+
+        window.delOp = (i) => { if(confirm("Supprimer ?")) { data.operators.splice(i,1); save(); } };
+        
+        window.login = () => {
+            const pin = document.getElementById("pinInput").value;
+            if(pin === "1234" || pin === "0000") {
+                document.getElementById("loginSection").classList.add("hidden");
+                document.getElementById("appSection").classList.remove("hidden");
+                if(pin === "1234") document.getElementById("adminSection").classList.remove("hidden");
+            } else { alert("PIN Erroné"); }
+            render();
+        };
+
+        window.logout = () => location.reload();
         window.togglePaySim = () => document.getElementById("paySimBox").classList.toggle("hidden", document.getElementById("payMode").value !== "virtuel");
 
         function render() {
             if(document.getElementById("appSection").classList.contains("hidden")) return;
+            
             document.getElementById("caisseUSD").innerText = data.caisse.USD.toLocaleString();
             document.getElementById("caisseCDF").innerText = data.caisse.CDF.toLocaleString();
             document.getElementById("displayTaux").innerText = data.taux;
 
-            let ops = ""; let opts = '<option value="caisse">Caisse Cash</option>'; let opsOnly = "";
+            let vncTotal = 0;
+            vncTotal += data.caisse.USD + (data.caisse.CDF / data.taux);
+
+            let ops = ""; let opts = '<option value="caisse">Tiroir Cash</option>'; let opsOnly = "";
             data.operators.forEach((o, i) => {
-                ops += `<div class="card"><b>${o.name}</b>: ${o.USD}$ | ${o.CDF}FC | Stock: ${o.stock}</div>`;
+                // CALCUL VNC : (Soldes $) + (Soldes FC / Taux) + (Stock * Son prix d'achat $)
+                const valSimUSD = o.USD + (o.CDF / data.taux) + (o.stock * (o.unitPrice || 0));
+                vncTotal += valSimUSD;
+                
+                ops += `<div class="card"><b>${o.name}</b><br>${o.USD}$ | ${o.CDF}FC<br><span style="color:#0ea5e9">Stock: ${o.stock} U (Prix Achat: ${o.unitPrice || 0}$)</span></div>`;
                 opts += `<option value="${i}">${o.name}</option>`;
                 opsOnly += `<option value="${i}">${o.name}</option>`;
             });
+
+            data.dettes.forEach(d => {
+                const valUSD = d.amt / (d.curr === "CDF" ? data.taux : 1);
+                if(d.type === "dette_moi") vncTotal -= valUSD;
+            });
+
+            document.getElementById("totalVNC").innerText = vncTotal.toFixed(2) + " $";
             document.getElementById("operatorBalances").innerHTML = ops;
             document.getElementById("srcWallet").innerHTML = opts;
             document.getElementById("destWallet").innerHTML = opts;
-            document.getElementById("expSource").innerHTML = opts;
             document.getElementById("operatorSelect").innerHTML = opsOnly;
             document.getElementById("paySimSelect").innerHTML = opsOnly;
-            document.getElementById("paySimSelect").innerHTML = opsOnly;
-
             document.getElementById("typeSelect").innerHTML = data.types.map((t,i) => `<option value="${i}">${t.name}</option>`).join("");
-            
-            // Admin List
-            document.getElementById("adminOpList").innerHTML = data.operators.map((o,i) => `<div style="display:flex; justify-content:space-between"><span>${o.name}</span><button onclick="delOp(${i})" style="padding:2px">X</button></div>`).join("");
-            document.getElementById("adminTypeList").innerHTML = data.types.map((t,i) => `<div style="display:flex; justify-content:space-between"><span>${t.name}</span><button onclick="delTy(${i})" style="padding:2px">X</button></div>`).join("");
+            document.getElementById("adminOpList").innerHTML = data.operators.map((o,i) => `<div style="display:flex; justify-content:space-between; margin-top:5px; background:white; padding:5px; border-radius:5px;"><span>${o.name}</span><button onclick="delOp(${i})">Suppr</button></div>`).join("");
 
             document.getElementById("dettesList").innerHTML = data.dettes.map((d, i) => `
-                <div class="card" style="display:flex; justify-content:space-between; align-items:center">
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left: 5px solid ${d.type==='dette_client'?'#ef4444':'#16a34a'}">
                     <div>
-                        <span class="${d.type==='dette_client'?'badge-rouge':'badge-vert'}">${d.type==='dette_client'?'Client me doit':'Je dois au client'}</span><br>
+                        <span class="badge-dette" style="background:${d.type==='dette_client'?'#fee2e2':'#dcfce7'}; color:${d.type==='dette_client'?'#b91c1c':'#166534'}">
+                            ${d.type==='dette_client'?'LE CLIENT ME DOIT':'JE DOIS AU CLIENT'}
+                        </span><br>
                         <b>${d.nom}</b>: ${d.amt} ${d.curr}
                     </div>
-                    <button onclick="reglerDette(${i})" style="font-size:10px; background:#1e293b">Régler</button>
+                    <button onclick="reglerDette(${i})" style="font-size:10px; background:#1e293b">PAYÉ</button>
                 </div>
-            `).join("");
+            `).join("") || "<p style='text-align:center'>Aucune dette</p>";
 
-            document.getElementById("history").innerHTML = data.transactions.slice(0,8).map(t => `<div class="card" style="font-size:11px"><b>${t.date}</b> - ${t.desc} (${t.amt}${t.curr})</div>`).join("");
+            document.getElementById("history").innerHTML = data.transactions.slice(0,8).map(t => `<div class="card" style="font-size:11px"><b>${t.date}</b>: ${t.desc} (${t.amt}${t.curr})</div>`).join("");
         }
     </script>
 </body>
