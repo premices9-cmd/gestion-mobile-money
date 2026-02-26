@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro Business - V3 Finale</title>
+    <title>MKA Pro Business - Système Hybride Certifié</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; margin: 0; color: white; padding-bottom: 50px; }
         .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -15,10 +15,8 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; border: 2px solid #facc15; }
         .vnc-val { font-size: 30px; font-weight: bold; color: #facc15; }
-        .change-box { background: #f0f9ff; border: 2px solid #0ea5e9; padding: 12px; border-radius: 12px; margin: 15px 0; }
-        .admin-box { border: 2px solid #ef4444; padding: 15px; border-radius: 12px; margin-top: 20px; background: #fff1f2; color: #991b1b; }
-        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; margin-top: 5px; display: block; text-transform: uppercase; }
-        .status-sync { font-size: 10px; text-align: center; color: #22c55e; margin-bottom: 5px; }
+        .hybrid-box { background: #fff7ed; border: 1px solid #f97316; padding: 10px; border-radius: 10px; margin: 10px 0; }
+        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -27,24 +25,22 @@
 
     <div class="container">
         <div id="loginSection">
-            <h2 style="text-align:center">Accès</h2>
+            <h2 style="text-align:center">Accès Système</h2>
             <input type="password" id="pinInput" placeholder="Code PIN">
-            <button onclick="login()" style="width:100%; padding: 15px;">OUVRIR</button>
+            <button onclick="login()" style="width:100%; padding: 15px;">DÉVERROUILLER</button>
         </div>
 
         <div id="appSection" class="hidden">
-            <div id="syncStatus" class="status-sync">● Système Connecté</div>
-
             <div class="vnc-box">
                 <span style="font-size: 11px; opacity: 0.8;">VALEUR NETTE COMPTABLE (VNC)</span><br>
                 <div class="vnc-val" id="totalVNC">0.00 $</div>
-                <div style="font-size: 10px; margin-top: 5px;">Converti en Dollars ($)</div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <button onclick="logout()" style="background:#ef4444; width:auto; padding:8px 15px; font-size:12px;">Déconnexion</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0;">
+                <button onclick="logout()" style="background:#ef4444; width:auto; padding:8px 15px; font-size:12px;">Sortir</button>
                 <div style="text-align:right; font-size: 13px;">
-                    <strong>Cash :</strong> <span id="caisseUSD" style="color:#16a34a">0</span>$ | <span id="caisseCDF" style="color:#16a34a">0</span>FC
+                    <strong>Tiroir Cash :</strong><br>
+                    <span id="caisseUSD" style="color:#16a34a; font-weight:bold">0</span> $ | <span id="caisseCDF" style="color:#16a34a; font-weight:bold">0</span> FC
                 </div>
             </div>
 
@@ -52,81 +48,71 @@
                 <span style="background:#facc15; color:black; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:13px;">Taux: 1$ = <span id="displayTaux">0</span> FC</span>
             </div>
 
-            <h3>Mes SIMs & Stocks</h3>
+            <h3>Balances & Stocks</h3>
             <div id="operatorBalances"></div>
 
-            <div class="change-box">
-                <h4 style="margin:0 0 10px 0; color:#0369a1;">🔄 Change / Mouvement interne</h4>
-                <label class="label-sm">DEPUIS (Source)</label>
-                <select id="srcWallet" onchange="calcDest()"></select>
-                <div class="grid-2">
-                    <input type="number" id="srcAmt" placeholder="Montant" oninput="calcDest()">
-                    <select id="srcCurr" onchange="calcDest()"><option value="USD">USD</option><option value="CDF">CDF</option></select>
-                </div>
-                <label class="label-sm">VERS (Destination)</label>
-                <select id="destWallet"></select>
-                <div class="grid-2">
-                    <input type="number" id="destAmt" readonly style="background:#e2e8f0; font-weight:bold" placeholder="Reçu">
-                    <select id="destCurr" onchange="calcDest()"><option value="CDF">CDF</option><option value="USD">USD</option></select>
-                </div>
-                <button onclick="executeGlobalChange()" style="background:#0ea5e9; width:100%; margin-top:10px; height:45px;">VALIDER LE TRANSFERT</button>
-            </div>
-
             <hr>
-            <h2>Vente / Retrait</h2>
+            <h2>Opération (Vente/Retrait)</h2>
+            
+            <label class="label-sm">1. SIM & TYPE</label>
             <div class="grid-2">
                 <select id="operatorSelect"></select>
                 <select id="typeSelect"></select>
             </div>
+
+            <label class="label-sm">2. MONTANT BRUT (Sur la SIM)</label>
             <div class="grid-2">
-                <input type="number" id="amount" placeholder="Montant">
+                <input type="number" id="amount" placeholder="Ex: 103">
                 <select id="currency"><option value="USD">USD</option><option value="CDF">CDF</option></select>
             </div>
-            <label class="label-sm">RÈGLEMENT :</label>
-            <select id="payMode" onchange="togglePaySim()">
-                <option value="cash">Paiement Cash (Tiroir)</option>
-                <option value="virtuel">Via une autre SIM</option>
-                <option value="dette_client">Dette (Client me doit)</option>
-                <option value="dette_moi">Crédit (Je dois au client)</option>
-            </select>
-            <div id="paySimBox" class="hidden"><select id="paySimSelect"></select></div>
-            <input type="text" id="motif" placeholder="Nom Client / Référence">
-            <button onclick="addTransaction()" style="background:#16a34a; width:100%; margin-top:10px; height:45px;">ENREGISTRER L'ACTION</button>
+
+            <div class="hybrid-box">
+                <label class="label-sm" style="color:#c2410c;">3. RÉPARTITION SORTIE CAISSE (Optionnel)</label>
+                <div class="grid-2">
+                    <div>
+                        <label style="font-size:10px">Donné en USD ($)</label>
+                        <input type="number" id="outUSD" value="0">
+                    </div>
+                    <div>
+                        <label style="font-size:10px">Donné en CDF (FC)</label>
+                        <input type="number" id="outCDF" value="0">
+                    </div>
+                </div>
+                <p style="font-size:9px; color:#9a3412; margin-top:5px;">* Laissez à 0 pour un paiement simple dans la devise brute.</p>
+            </div>
+
+            <input type="text" id="motif" placeholder="Nom du Client / Référence">
+            <button onclick="addTransaction()" style="background:#16a34a; width:100%; height:50px; margin-top:10px;">VALIDER L'OPÉRATION</button>
 
             <hr>
-            <h3>Alertes Dettes</h3>
-            <div id="dettesList"></div>
-
-            <hr>
-            <h3>Historique</h3>
+            <h3>Journal Récent</h3>
             <div id="history"></div>
 
             <div id="adminSection" class="hidden">
-                <div class="admin-box">
+                <div class="admin-box" style="border: 2px solid #ef4444; padding: 15px; border-radius: 12px; margin-top: 20px; background: #fff1f2; color: #991b1b;">
                     <h2 style="margin:0;">🔧 Configuration</h2>
                     <div style="background:white; padding:10px; border-radius:8px; margin:10px 0; color:black;">
-                        <h4>Modifier le Taux</h4>
+                        <h4>Taux Global</h4>
                         <input type="number" id="newTaux" placeholder="Taux (ex: 2850)">
                         <button onclick="updateTaux()" style="width:100%">Mettre à jour</button>
                     </div>
                     <div style="background:white; padding:10px; border-radius:8px; margin:10px 0; color:black;">
-                        <h4>Nouvelle SIM</h4>
+                        <h4>Ajouter SIM</h4>
                         <input type="text" id="newOpName" placeholder="Nom SIM">
                         <div class="grid-2"><input type="number" id="initUSD" placeholder="Solde $"><input type="number" id="initCDF" placeholder="Solde FC"></div>
                         <div class="grid-2"><input type="number" id="initStock" placeholder="Stock"><input type="number" id="initPrice" placeholder="Prix Achat $"></div>
                         <button onclick="addOperator()" style="width:100%; background:#b91c1c">Créer SIM</button>
                     </div>
                     <div style="background:white; padding:10px; border-radius:8px; margin:10px 0; color:black;">
-                        <h4>Types d'Opérations</h4>
-                        <div class="grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px">
-                            <select id="impO"><option value="0">S 0</option><option value="1">S +</option><option value="-1">S -</option></select>
-                            <select id="impS"><option value="0">K 0</option><option value="1">K +</option><option value="-1">K -</option></select>
-                            <select id="impC"><option value="0">C 0</option><option value="1">C +</option><option value="-1">C -</option></select>
+                        <h4>Types Opérations</h4>
+                        <div class="grid-2" style="margin-bottom:5px;">
+                            <select id="impO"><option value="0">SIM: 0</option><option value="1">SIM: +</option><option value="-1">SIM: -</option></select>
+                            <select id="impS"><option value="0">Stk: 0</option><option value="1">Stk: +</option><option value="-1">Stk: -</option></select>
                         </div>
-                        <input type="text" id="newTypeName" placeholder="Nom (Dépôt...)">
-                        <button onclick="addType()" style="width:100%; background:#b91c1c; margin-top:5px">Ajouter</button>
+                        <select id="impC" style="margin-bottom:5px;"><option value="0">Csh: 0</option><option value="1">Csh: +</option><option value="-1">Csh: -</option></select>
+                        <input type="text" id="newTypeName" placeholder="Nom (Dépôt, Retrait...)">
+                        <button onclick="addType()" style="width:100%; background:#b91c1c">Ajouter Type</button>
                     </div>
-                    <div id="adminOpList" style="color:black"></div>
                 </div>
             </div>
         </div>
@@ -150,7 +136,6 @@
         onValue(ref(db, 'mka_data'), (snap) => {
             if(snap.val()) {
                 data = snap.val();
-                if(!data.dettes) data.dettes = [];
                 if(!data.operators) data.operators = [];
                 if(!data.types) data.types = [];
                 if(!data.transactions) data.transactions = [];
@@ -160,66 +145,49 @@
 
         const save = () => set(ref(db, 'mka_data'), data);
 
-        window.calcDest = () => {
-            const amt = parseFloat(document.getElementById("srcAmt").value) || 0;
-            const sc = document.getElementById("srcCurr").value;
-            const dc = document.getElementById("destCurr").value;
-            let res = amt;
-            if(sc === "USD" && dc === "CDF") res = amt * data.taux;
-            else if(sc === "CDF" && dc === "USD") res = amt / data.taux;
-            document.getElementById("destAmt").value = res.toFixed(2);
-        };
-
-        window.executeGlobalChange = () => {
-            const sIdx = document.getElementById("srcWallet").value;
-            const dIdx = document.getElementById("destWallet").value;
-            const sAmt = parseFloat(document.getElementById("srcAmt").value);
-            const dAmt = parseFloat(document.getElementById("destAmt").value);
-            const sc = document.getElementById("srcCurr").value;
-            const dc = document.getElementById("destCurr").value;
-
-            if(!sAmt || sAmt <= 0) return alert("Montant invalide");
-
-            if(sIdx === "caisse") data.caisse[sc] -= sAmt; 
-            else if(data.operators[sIdx]) data.operators[sIdx][sc] -= sAmt;
-
-            if(dIdx === "caisse") data.caisse[dc] += dAmt; 
-            else if(data.operators[dIdx]) data.operators[dIdx][dc] += dAmt;
-
-            data.transactions.unshift({ date: new Date().toLocaleString(), desc: "TRANSFERT", amt: sAmt, curr: sc });
-            save(); alert("Mouvement validé");
-        };
-
         window.addTransaction = () => {
             const opI = document.getElementById("operatorSelect").value;
             const tyI = document.getElementById("typeSelect").value;
-            const amt = parseFloat(document.getElementById("amount").value) || 0;
+            const amtBrut = parseFloat(document.getElementById("amount").value) || 0;
             const cur = document.getElementById("currency").value;
-            const mode = document.getElementById("payMode").value;
-            const cli = document.getElementById("motif").value;
-
-            if(!data.operators[opI] || !data.types[tyI]) return alert("Sélectionnez une SIM et un Type");
             
-            const ty = data.types[tyI];
+            const oUSD = parseFloat(document.getElementById("outUSD").value) || 0;
+            const oCDF = parseFloat(document.getElementById("outCDF").value) || 0;
+
+            if(!data.operators[opI] || !data.types[tyI] || amtBrut <= 0) return alert("Données invalides");
+
             const op = data.operators[opI];
+            const ty = data.types[tyI];
 
-            op[cur] += (amt * ty.impO);
-            op.stock += (amt * ty.impS);
+            // 1. IMPACT SIM (Montant brut)
+            op[cur] += (amtBrut * ty.impO);
+            op.stock += (amtBrut * ty.impS);
 
-            if(mode === "cash") data.caisse[cur] += (amt * ty.impC);
-            else if(mode === "virtuel") {
-                const pI = document.getElementById("paySimSelect").value;
-                if(data.operators[pI]) data.operators[pI][cur] += (amt * ty.impC);
+            // 2. IMPACT CAISSE (Logique Hybride vs Classique)
+            if(oUSD > 0 || oCDF > 0) {
+                // Mode Hybride : On retire exactement ce qui a été saisi manuellement
+                data.caisse.USD -= oUSD;
+                data.caisse.CDF -= oCDF;
             } else {
-                if(!cli) return alert("Nom requis pour dette");
-                data.dettes.push({ nom: cli, amt: amt, curr: cur, type: mode, date: new Date().toLocaleDateString() });
+                // Mode Classique : Automatique
+                data.caisse[cur] += (amtBrut * ty.impC);
             }
 
-            data.transactions.unshift({ date: new Date().toLocaleString(), desc: ty.name + " (" + op.name + ")", amt: amt, curr: cur });
-            save(); alert("Enregistré");
+            data.transactions.unshift({
+                date: new Date().toLocaleString(),
+                desc: `${ty.name} ${op.name} (${amtBrut}${cur})`,
+                details: (oUSD > 0 || oCDF > 0) ? `Hybride: ${oUSD}$ + ${oCDF}FC` : `Classique`
+            });
+
+            save();
+            alert("Opération enregistrée !");
+            // Reset
+            document.getElementById("amount").value = "";
+            document.getElementById("outUSD").value = 0;
+            document.getElementById("outCDF").value = 0;
         };
 
-        window.updateTaux = () => { data.taux = parseFloat(document.getElementById("newTaux").value); save(); };
+        window.updateTaux = () => { data.taux = parseFloat(document.getElementById("newTaux").value); save(); alert("Taux OK"); };
         window.addOperator = () => {
             const n = document.getElementById("newOpName").value;
             data.operators.push({ 
@@ -229,15 +197,18 @@
                 stock: parseFloat(document.getElementById("initStock").value)||0,
                 unitPrice: parseFloat(document.getElementById("initPrice").value)||0 
             });
-            save();
+            save(); alert("SIM Créée");
         };
         window.addType = () => {
             const n = document.getElementById("newTypeName").value;
-            data.types.push({ name: n, impO: parseInt(document.getElementById("impO").value), impS: parseInt(document.getElementById("impS").value), impC: parseInt(document.getElementById("impC").value) });
-            save();
+            data.types.push({ 
+                name: n, 
+                impO: parseInt(document.getElementById("impO").value), 
+                impS: parseInt(document.getElementById("impS").value), 
+                impC: parseInt(document.getElementById("impC").value) 
+            });
+            save(); alert("Type Créé");
         };
-        window.delOp = (i) => { if(confirm("Supprimer ?")) { data.operators.splice(i,1); save(); } };
-        window.reglerDette = (i) => { data.dettes.splice(i,1); save(); };
 
         window.login = () => {
             const p = document.getElementById("pinInput").value;
@@ -246,10 +217,10 @@
                 document.getElementById("appSection").classList.remove("hidden");
                 if(p === "1234") document.getElementById("adminSection").classList.remove("hidden");
                 render();
-            } else alert("PIN Incorrect");
+            } else alert("Code PIN Incorrect");
         };
+
         window.logout = () => location.reload();
-        window.togglePaySim = () => document.getElementById("paySimBox").classList.toggle("hidden", document.getElementById("payMode").value !== "virtuel");
 
         function render() {
             if(document.getElementById("appSection").classList.contains("hidden")) return;
@@ -258,33 +229,19 @@
             document.getElementById("displayTaux").innerText = data.taux;
 
             let vnc = data.caisse.USD + (data.caisse.CDF / data.taux);
-            let opCards = ""; let opOpts = '<option value="caisse">Tiroir Cash</option>'; let opOnly = "";
-
+            let opCards = "";
+            
             data.operators.forEach((o, i) => {
                 const stockVal = o.stock * (o.unitPrice || 0);
                 vnc += o.USD + (o.CDF / data.taux) + stockVal;
-                opCards += `<div class="card"><b>${o.name}</b>: ${o.USD}$ | ${o.CDF}FC<br><small>Stock: ${o.stock} (Prix Achat: ${o.unitPrice || 0}$)</small></div>`;
-                opOpts += `<option value="${i}">${o.name}</option>`;
-                opOnly += `<option value="${i}">${o.name}</option>`;
+                opCards += `<div class="card"><b>${o.name}</b>: ${o.USD}$ | ${o.CDF}FC<br><small>Stock: ${o.stock} (P.A: ${o.unitPrice || 0}$)</small></div>`;
             });
-
-            data.dettes.forEach(d => { if(d.type === "dette_moi") vnc -= (d.amt / (d.curr === "CDF" ? data.taux : 1)); });
 
             document.getElementById("totalVNC").innerText = vnc.toFixed(2) + " $";
             document.getElementById("operatorBalances").innerHTML = opCards;
-            document.getElementById("srcWallet").innerHTML = opOpts;
-            document.getElementById("destWallet").innerHTML = opOpts;
-            document.getElementById("operatorSelect").innerHTML = opOnly;
-            document.getElementById("paySimSelect").innerHTML = opOnly;
-            document.getElementById("typeSelect").innerHTML = data.types.map((t,i) => `<option value="${i}">${t.name}</option>`).join("");
-            document.getElementById("adminOpList").innerHTML = data.operators.map((o,i) => `<div style="display:flex; justify-content:space-between; margin-top:5px; background:white; padding:5px; color:black"><span>${o.name}</span><button onclick="delOp(${i})">X</button></div>`).join("");
-            document.getElementById("dettesList").innerHTML = data.dettes.map((d, i) => `
-                <div class="card" style="border-left:5px solid ${d.type==='dette_client'?'#ef4444':'#16a34a'}">
-                    <b>${d.nom}</b>: ${d.amt}${d.curr} (${d.type==='dette_client'?'Lui':'Moi'})
-                    <button onclick="reglerDette(${i})" style="float:right; padding:2px 8px;">OK</button>
-                </div>
-            `).join("");
-            document.getElementById("history").innerHTML = data.transactions.slice(0,8).map(t => `<div class="card" style="font-size:11px"><b>${t.date}</b>: ${t.desc}</div>`).join("");
+            document.getElementById("operatorSelect").innerHTML = data.operators.map((o,i)=>`<option value="${i}">${o.name}</option>`).join("");
+            document.getElementById("typeSelect").innerHTML = data.types.map((t,i)=>`<option value="${i}">${t.name}</option>`).join("");
+            document.getElementById("history").innerHTML = data.transactions.slice(0,5).map(t => `<div class="card" style="font-size:11px"><b>${t.date}</b>: ${t.desc}<br><i style="color:gray">${t.details || ""}</i></div>`).join("");
         }
     </script>
 </body>
