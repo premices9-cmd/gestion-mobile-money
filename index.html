@@ -3,84 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro - V6.4 FLEX STOCK</title>
+    <title>MKA PRO V9 - CONTRÔLE ABSOLU</title>
     <style>
-        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--primary); margin: 0; color: white; padding-bottom: 40px; }
-        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; }
-        input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; }
-        button { cursor: pointer; background: var(--primary); color: white; font-weight: bold; border: none; }
-        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 15px; border-radius: 15px; text-align: center; border: 2px solid var(--warning); }
+        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; --info: #3b82f6; --admin: #8b5cf6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--primary); margin: 0; color: white; padding-bottom: 50px; }
+        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        input, select, button { padding: 12px; margin: 5px 0; border-radius: 10px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; font-size: 14px; }
+        button { cursor: pointer; background: var(--primary); color: white; font-weight: bold; border: none; transition: 0.3s; }
+        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid var(--warning); margin-bottom: 15px; }
         .vnc-val { font-size: 28px; font-weight: bold; color: var(--warning); }
-        .card { background: #f1f5f9; padding: 10px; margin: 8px 0; border-radius: 8px; border-left: 5px solid var(--primary); font-size: 13px; }
-        .neg { color: var(--danger) !important; font-weight: bold; } /* Style pour solde négatif */
+        .card { background: #f8fafc; padding: 12px; margin: 8px 0; border-radius: 10px; border-left: 6px solid var(--primary); font-size: 14px; display: flex; justify-content: space-between; }
         .hidden { display: none !important; }
-        .recharge-box { background: #f0f9ff; border: 2px solid #0ea5e9; padding: 15px; border-radius: 12px; margin-top: 15px; color: black; }
-        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-top: 8px; }
+        .section-title { font-size: 12px; font-weight: 800; color: #64748b; margin-top: 15px; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .admin-panel { background: #f5f3ff; border: 2px solid var(--admin); padding: 15px; border-radius: 15px; margin-top: 25px; color: black; }
+        .btn-delete { background: var(--danger); padding: 5px 10px; font-size: 10px; width: auto; }
+        .log-box { background: #000; color: #00ff00; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 5px; max-height: 100px; overflow-y: auto; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <div id="loginSection" style="padding:50px 0; text-align:center;">
+            <h1 style="color:var(--primary);">MKA PRO V9</h1>
+            <input type="password" id="pinInput" placeholder="Code PIN">
+            <button onclick="handleLogin()" style="background:var(--success); padding:18px;">SE CONNECTER</button>
+        </div>
+
         <div id="appSection" class="hidden">
             <div class="vnc-box">
-                <span style="font-size: 10px; opacity: 0.8;">VALEUR NETTE (CASH + STOCKS - DETTES SIM)</span><br>
+                <span style="font-size: 11px; opacity: 0.8;">CAPITAL TOTAL</span><br>
                 <div class="vnc-val" id="totalVNC">0.00 $</div>
-                <div style="font-size: 11px;">Taux Marché : <span id="displayTaux">0</span> FC</div>
+                <div style="font-size: 12px;">Taux Marché : <span id="displayTaux">0</span> FC</div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; margin:15px 0; font-size: 13px;">
-                <button onclick="location.reload()" style="background:var(--danger); width:auto; padding:5px 12px;">Quitter</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <button onclick="location.reload()" style="background:var(--danger); width:auto; padding:8px 15px;">Sortir</button>
                 <div style="text-align:right">
-                    <strong>Tiroir Cash :</strong><br>
-                    <span id="caisseUSD">0</span> $ | <span id="caisseCDF">0</span> FC
+                    <span id="caisseUSD" style="color:var(--success); font-weight:bold; font-size:18px;">0</span> <small>$</small> | 
+                    <span id="caisseCDF" style="color:var(--success); font-weight:bold; font-size:18px;">0</span> <small>FC</small>
                 </div>
             </div>
 
             <div id="operatorBalances"></div>
-            <hr>
 
-            <div id="adminSection" class="hidden">
-                <div class="recharge-box">
-                    <h3 style="margin:0 0 10px 0; color:#0369a1; font-size:16px;">📥 RÉAPPRO / TRANSFERT ENTRE SIM</h3>
-                    
-                    <label class="label-sm">SIM DESTINATION (Reçoit le stock) :</label>
-                    <select id="rechargeOpDest"></select>
-                    
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:5px;">
-                        <input type="number" id="rechargeAmt" placeholder="Montant">
-                        <select id="rechargeCur"><option value="USD">USD</option><option value="CDF">CDF</option></select>
-                    </div>
-
-                    <label class="label-sm">SOURCE DU PAIEMENT :</label>
-                    <select id="rechargeSource" onchange="toggleSource()">
-                        <option value="caisse">Cash du Tiroir</option>
-                        <option value="sim">Payer avec une autre SIM (Airtel Money, etc.)</option>
-                        <option value="externe">Apport Externe / Bonus</option>
-                    </select>
-
-                    <div id="sourceSimBox" class="hidden">
-                        <label class="label-sm">SIM QUI PAYE (Peut finir en négatif) :</label>
-                        <select id="rechargeOpSource"></select>
-                    </div>
-
-                    <label class="label-sm">TAUX D'ACHAT (Optionnel si 0) :</label>
-                    <input type="number" id="rechargePrice" placeholder="Prix d'achat">
-                    
-                    <button onclick="processRecharge()" style="background:#0ea5e9; margin-top:10px;">VALIDER L'OPÉRATION</button>
-                </div>
-
-                <div style="margin-top:20px;">
-                    <input type="text" id="newOpName" placeholder="Nom de la nouvelle SIM">
-                    <button onclick="addOperator()">+ Ajouter SIM (Même sans stock)</button>
-                </div>
+            <div class="section-title">📱 Mobile Money</div>
+            <div class="grid">
+                <select id="mmOp"></select>
+                <select id="mmType">
+                    <option value="depot">Dépôt (SIM vers Cash)</option>
+                    <option value="retrait">Retrait (Cash vers SIM)</option>
+                </select>
             </div>
-        </div>
+            <div class="grid"><input type="number" id="mmAmt" placeholder="Montant"><select id="mmCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select></div>
+            <button onclick="doMM()" style="background:var(--success)">Valider MM</button>
 
-        <div id="loginSection" style="padding:40px 0; text-align:center;">
-            <h1>MKA PRO V6.4</h1>
-            <input type="password" id="pinInput" placeholder="PIN">
-            <button onclick="login()" style="width:100%; padding:15px; background:var(--success)">ACCÉDER</button>
+            <div class="section-title">💱 Change & 📩 Transfert</div>
+            <div class="grid">
+                <select id="quickAction" onchange="toggleQuickFields()">
+                    <option value="vendre">Vendre $ (Reçoit FC)</option>
+                    <option value="acheter">Acheter $ (Donne FC)</option>
+                    <option value="envoi">Envoi Simple (Cash +)</option>
+                    <option value="reception">Réception Simple (Cash -)</option>
+                </select>
+                <input type="number" id="quickAmt" placeholder="Montant">
+            </div>
+            <div id="changeTauxBox" class="grid">
+                <input type="number" id="quickTaux" placeholder="Taux appliqué">
+                <select disabled><option>Fixé en $</option></select>
+            </div>
+            <button onclick="doQuickAction()" style="background:var(--info)">Valider Action</button>
+
+            <div id="adminSection" class="hidden admin-panel">
+                <h3 style="margin:0; color:var(--admin);">⚙️ ADMINISTRATION</h3>
+                
+                <label class="section-title">Achat Stock (Recharge)</label>
+                <select id="rechDest"></select>
+                <div class="grid"><input type="number" id="rechAmt" placeholder="Montant"><select id="rechCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select></div>
+                <select id="rechSource" onchange="document.getElementById('rechSimBox').classList.toggle('hidden', this.value !== 'sim')">
+                    <option value="caisse">Tiroir Cash</option>
+                    <option value="sim">Autre SIM</option>
+                    <option value="externe">Externe</option>
+                </select>
+                <div id="rechSimBox" class="hidden"><select id="rechSrcSim"></select></div>
+                <input type="number" id="rechPrice" placeholder="Taux d'achat">
+                <button onclick="doRecharge()" style="background:var(--admin)">Enregistrer Stock</button>
+
+                <label class="section-title">Gestion des Opérateurs</label>
+                <div id="adminOpList"></div>
+                <div class="grid"><input type="text" id="newSimName" placeholder="Nom SIM"><button onclick="addSim()">+ Ajouter</button></div>
+
+                <label class="section-title">Ajustement Forcé & Taux</label>
+                <div class="grid"><input type="number" id="marketTaux" placeholder="Taux Marché"><button onclick="updateTaux()">MAJ Taux</button></div>
+                <select id="fixSelect"><option value="caisse">Tiroir Cash</option></select>
+                <div class="grid"><input type="number" id="fixUSD" placeholder="Force $"><input type="number" id="fixCDF" placeholder="Force FC"></div>
+                <button onclick="doFix()" style="background:var(--danger)">Forcer Soldes</button>
+
+                <div class="log-box" id="logs"></div>
+            </div>
         </div>
     </div>
 
@@ -88,98 +108,88 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs",
-            authDomain: "mka-mobile-money.firebaseapp.com",
-            databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com",
-            projectId: "mka-mobile-money"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs", databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com", projectId: "mka-mobile-money" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let data = { caisse: {USD:0, CDF:0}, operators: [], transactions: [], taux: 2850 };
+        let data = { caisse: {USD:0, CDF:0}, operators: [], logs: [], taux: 2850 };
 
-        onValue(ref(db, 'mka_data'), (snap) => {
-            if(snap.val()) {
-                data = snap.val();
-                if(!data.operators) data.operators = [];
-                render();
-            }
-        });
+        onValue(ref(db, 'mka_data'), (snap) => { if(snap.val()){ data = snap.val(); if(!data.logs) data.logs = []; render(); }});
 
         const save = () => set(ref(db, 'mka_data'), data);
+        const log = (m) => { data.logs.unshift(`${new Date().toLocaleTimeString()}: ${m}`); if(data.logs.length > 10) data.logs.pop(); };
 
-        window.toggleSource = () => {
-            document.getElementById("sourceSimBox").classList.toggle("hidden", document.getElementById("rechargeSource").value !== "sim");
+        window.handleLogin = () => {
+            const p = document.getElementById("pinInput").value;
+            if(p === "admin1011") { document.getElementById("loginSection").classList.add("hidden"); document.getElementById("appSection").classList.remove("hidden"); document.getElementById("adminSection").classList.remove("hidden"); }
+            else if(p === "1320") { document.getElementById("loginSection").classList.add("hidden"); document.getElementById("appSection").classList.remove("hidden"); }
+            else alert("PIN incorrect");
         };
 
-        window.processRecharge = () => {
-            const destIdx = document.getElementById("rechargeOpDest").value;
-            const amt = parseFloat(document.getElementById("rechargeAmt").value) || 0;
-            const cur = document.getElementById("rechargeCur").value;
-            const source = document.getElementById("rechargeSource").value;
-            const price = parseFloat(document.getElementById("rechargePrice").value) || data.taux;
-
-            if(amt <= 0) return alert("Montant invalide");
-
-            // Créditer destination
-            data.operators[destIdx][cur] = (data.operators[destIdx][cur] || 0) + amt;
-            data.operators[destIdx].buyPrice = price;
-
-            // Débiter source
-            if(source === "caisse") {
-                data.caisse[cur] -= amt;
-            } else if(source === "sim") {
-                const srcIdx = document.getElementById("rechargeOpSource").value;
-                data.operators[srcIdx][cur] = (data.operators[srcIdx][cur] || 0) - amt;
-            }
-
-            save();
-            alert("Flux enregistré !");
+        window.doMM = () => {
+            const opI = document.getElementById("mmOp").value;
+            const type = document.getElementById("mmType").value;
+            const amt = parseFloat(document.getElementById("mmAmt").value) || 0;
+            const cur = document.getElementById("mmCurr").value;
+            if(amt <= 0) return;
+            if(type === "depot") { data.caisse[cur] += amt; data.operators[opI][cur] -= amt; }
+            else { data.caisse[cur] -= amt; data.operators[opI][cur] += amt; }
+            log(`${type} ${data.operators[opI].name}: ${amt}${cur}`); save(); alert("Validé");
         };
 
-        window.addOperator = () => {
-            const n = document.getElementById("newOpName").value;
-            if(n) { 
-                // Création d'une SIM vide par défaut
-                data.operators.push({ name: n, USD: 0, CDF: 0, buyPrice: data.taux }); 
-                save(); 
-                document.getElementById("newOpName").value = "";
-            }
+        window.doQuickAction = () => {
+            const act = document.getElementById("quickAction").value;
+            const amt = parseFloat(document.getElementById("quickAmt").value) || 0;
+            const tx = parseFloat(document.getElementById("quickTaux").value) || data.taux;
+            if(amt <= 0) return;
+            if(act === "vendre") { data.caisse.USD -= amt; data.caisse.CDF += (amt * tx); }
+            else if(act === "acheter") { data.caisse.USD += amt; data.caisse.CDF -= (amt * tx); }
+            else if(act === "envoi") { data.caisse.USD += amt; } // Exemple simplifié en USD
+            else if(act === "reception") { data.caisse.USD -= amt; }
+            log(`Action ${act}: ${amt}`); save(); alert("Enregistré");
         };
 
-        window.login = () => {
-            if(document.getElementById("pinInput").value === "1234") {
-                document.getElementById("loginSection").classList.add("hidden");
-                document.getElementById("appSection").classList.remove("hidden");
-                document.getElementById("adminSection").classList.remove("hidden");
-                render();
-            }
+        window.doRecharge = () => {
+            const dI = document.getElementById("rechDest").value;
+            const amt = parseFloat(document.getElementById("rechAmt").value) || 0;
+            const cur = document.getElementById("rechCurr").value;
+            const src = document.getElementById("rechSource").value;
+            data.operators[dI][cur] += amt;
+            data.operators[dI].buyPrice = parseFloat(document.getElementById("rechPrice").value) || data.taux;
+            if(src === "caisse") data.caisse[cur] -= amt;
+            if(src === "sim") data.operators[document.getElementById("rechSrcSim").value][cur] -= amt;
+            log(`Recharge ${data.operators[dI].name}`); save(); alert("Stock OK");
+        };
+
+        window.addSim = () => { const n = document.getElementById("newSimName").value; if(n){ data.operators.push({name:n, USD:0, CDF:0, buyPrice:data.taux}); save(); }};
+        window.deleteSim = (i) => { if(confirm("Supprimer cette SIM ?")){ data.operators.splice(i, 1); save(); }};
+        window.updateTaux = () => { const t = document.getElementById("marketTaux").value; if(t){ data.taux = parseFloat(t); save(); }};
+
+        window.doFix = () => {
+            const target = document.getElementById("fixSelect").value;
+            const u = document.getElementById("fixUSD").value;
+            const c = document.getElementById("fixCDF").value;
+            if(target === "caisse") { if(u!=="") data.caisse.USD = parseFloat(u); if(c!=="") data.caisse.CDF = parseFloat(c); }
+            else { if(u!=="") data.operators[target].USD = parseFloat(u); if(c!=="") data.operators[target].CDF = parseFloat(c); }
+            log("Correction Admin"); save(); alert("Forçage OK");
         };
 
         function render() {
-            if(document.getElementById("appSection").classList.contains("hidden")) return;
             document.getElementById("displayTaux").innerText = data.taux;
-            document.getElementById("caisseUSD").innerText = (data.caisse.USD || 0).toFixed(2);
-            document.getElementById("caisseCDF").innerText = (data.caisse.CDF || 0).toLocaleString();
-
+            document.getElementById("caisseUSD").innerText = data.caisse.USD.toFixed(2);
+            document.getElementById("caisseCDF").innerText = data.caisse.CDF.toLocaleString();
             let vnc = data.caisse.USD + (data.caisse.CDF / data.taux);
-            data.operators.forEach(o => {
-                vnc += (o.USD || 0) + ((o.CDF || 0) / (o.buyPrice || data.taux));
-            });
+            data.operators.forEach(o => { vnc += o.USD + (o.CDF / (o.buyPrice || data.taux)); });
             document.getElementById("totalVNC").innerText = vnc.toFixed(2) + " $";
 
-            const opsHtml = data.operators.map((o,i) => `<option value="${i}">${o.name}</option>`).join("");
-            document.getElementById("rechargeOpDest").innerHTML = opsHtml;
-            document.getElementById("rechargeOpSource").innerHTML = opsHtml;
-
-            document.getElementById("operatorBalances").innerHTML = data.operators.map(o => `
-                <div class="card">
-                    <b>${o.name}</b>: 
-                    <span class="${o.USD < 0 ? 'neg' : ''}">${(o.USD || 0).toFixed(2)}$</span> | 
-                    <span class="${o.CDF < 0 ? 'neg' : ''}">${(o.CDF || 0).toLocaleString()}FC</span>
-                </div>
-            `).join("");
+            const opts = data.operators.map((o,i) => `<option value="${i}">${o.name}</option>`).join("");
+            document.getElementById("mmOp").innerHTML = opts;
+            document.getElementById("rechDest").innerHTML = opts;
+            document.getElementById("rechSrcSim").innerHTML = opts;
+            document.getElementById("fixSelect").innerHTML = `<option value="caisse">Tiroir Cash</option>` + opts;
+            
+            document.getElementById("operatorBalances").innerHTML = data.operators.map(o => `<div class="card"><b>${o.name}</b><span>${o.USD.toFixed(2)}$ | ${o.CDF}FC</span></div>`).join("");
+            document.getElementById("adminOpList").innerHTML = data.operators.map((o,i) => `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">${o.name} <button class="btn-delete" onclick="deleteSim(${i})">Supprimer</button></div>`).join("");
+            document.getElementById("logs").innerHTML = data.logs.join("<br>");
         }
     </script>
 </body>
