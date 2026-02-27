@@ -1,214 +1,282 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA PRO V16.1 - VERSION FINALE</title>
-    <style>
-        :root { --p: #0f172a; --s: #16a34a; --d: #ef4444; --w: #facc15; --a: #8b5cf6; --i: #3b82f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--p); margin: 0; color: white; padding-bottom: 30px; }
-        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; min-height: 95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; font-size: 14px; }
-        button { cursor: pointer; background: var(--p); color: white; font-weight: bold; border: none; transition: 0.2s; }
-        button:active { transform: scale(0.98); }
-        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 15px; border-radius: 12px; text-align: center; border: 2px solid var(--w); margin-bottom: 10px; }
-        .vnc-val { font-size: 28px; font-weight: bold; color: var(--w); }
-        .card { background: #f8fafc; padding: 10px; margin: 5px 0; border-radius: 8px; border-left: 5px solid var(--p); font-size: 13px; display: flex; justify-content: space-between; border: 1px solid #e2e8f0; align-items: center; }
-        .hidden { display: none !important; }
-        .section-title { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-top: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 3px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .action-card { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; }
-        .pos { color: var(--s); font-weight: bold; }
-        .neg { color: var(--d); font-weight: bold; }
-        .hist-item { font-size: 10px; border-bottom: 1px solid #eee; padding: 5px 0; color: #334155; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MKA PRO V18.1 ENTREPRISE</title>
+
+<style>
+:root { --p:#0f172a; --s:#16a34a; --d:#ef4444; --w:#facc15; --i:#3b82f6; }
+body { font-family:Segoe UI; background:var(--p); margin:0; color:white; }
+.container { background:white; color:black; margin:10px; padding:15px; border-radius:15px; min-height:95vh; }
+input,select,button { padding:10px; margin:5px 0; width:100%; border-radius:8px; }
+button { background:var(--p); color:white; font-weight:bold; border:none; cursor:pointer; }
+button:hover { opacity:0.9; }
+.hidden { display:none; }
+.card { background:#f1f5f9; padding:8px; border-radius:8px; margin:5px 0; }
+.vnc { background:#0f172a; color:#facc15; padding:15px; border-radius:12px; text-align:center; }
+.hist-item { font-size:11px; border-bottom:1px solid #ddd; padding:4px; }
+h3 { margin-top:25px; }
+</style>
 </head>
+
 <body>
-
 <div class="container">
-    <div id="loginPage" style="padding:50px 0; text-align:center;">
-        <h2 style="color:var(--p); margin-bottom:30px;">MKA PRO V16.1<br><small style="font-size:12px; color:#64748b;">Système de Gestion Intégral</small></h2>
-        <input type="password" id="pin" placeholder="ENTREZ VOTRE PIN" style="text-align:center; font-size:20px; letter-spacing:5px;">
-        <button onclick="login()" style="background:var(--s); margin-top:20px;">OUVRIR LA SESSION</button>
-    </div>
 
-    <div id="mainApp" class="hidden">
-        <div class="vnc-box">
-            <small>VALEUR NETTE COMPTABLE (VNC)</small><br>
-            <div class="vnc-val" id="vncDisp">0.00 $</div>
-            <div style="font-size:11px;">Taux Marché: <span id="tauxDisp">0</span> | Taux Retrait: <span id="tauxRetDisp">0</span></div>
-        </div>
+<!-- LOGIN -->
+<div id="loginPage">
+<h2>MKA PRO V18.1</h2>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Mot de passe">
+<button onclick="login()">Connexion</button>
+</div>
 
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap:5px;">
-            <button onclick="location.reload()" style="background:var(--d); flex:1;">Quitter</button>
-            <button onclick="toggleHist()" style="background:var(--i); flex:1;">📜 Journal</button>
-            <div style="text-align:right; flex:1.5;">
-                <span id="cashUSD" class="pos" style="font-size:16px;">0</span> $ <br>
-                <span id="cashCDF" class="pos" style="font-size:14px;">0</span> FC
-            </div>
-        </div>
+<!-- MAIN -->
+<div id="mainApp" class="hidden">
 
-        <div id="accountList"></div>
+<div class="vnc">
+<div>VALEUR NETTE</div>
+<h2 id="vncDisp">0 $</h2>
+<div>Caisse: <span id="cashUSD"></span>$ | <span id="cashCDF"></span> FC</div>
+</div>
 
-        <div id="histBox" class="hidden action-card" style="max-height: 200px; overflow-y: auto; background:white;">
-            <div class="section-title">Derniers mouvements</div>
-            <div id="histContent"></div>
-        </div>
+<button onclick="logout()" style="background:var(--d)">Déconnexion</button>
 
-        <div class="section-title">💱 BUREAU DE CHANGE (CASH)</div>
-        <div class="action-card">
-            <div class="grid">
-                <select id="chDir"><option value="buy">J'achète $ (Donne FC)</option><option value="sell">Je vends $ (Reçois FC)</option></select>
-                <input type="number" id="chAmt" placeholder="Montant USD" oninput="calcCh()">
-            </div>
-            <div class="grid">
-                <input type="number" id="chRate" placeholder="Taux appliqué">
-                <input type="number" id="chRes" placeholder="Résultat FC" readonly style="background:#e2e8f0; font-weight:bold;">
-            </div>
-            <button onclick="execChange()" style="background:var(--w); color:black; margin-top:5px;">VALIDER LE CHANGE</button>
-        </div>
+<h3>COMPTES</h3>
+<div id="accountList"></div>
 
-        <div class="section-title">🏧 RETRAIT MIXTE (CLIENT)</div>
-        <div class="action-card">
-            <select id="retSim"></select>
-            <div class="grid">
-                <input type="number" id="retTot" placeholder="Total SIM ($)" oninput="calcRM()">
-                <input type="number" id="retFr" placeholder="Frais Cash ($)" oninput="calcRM()">
-            </div>
-            <div class="grid">
-                <input type="number" id="gU" placeholder="Donner USD Cash" oninput="calcRM()">
-                <input type="number" id="gC" placeholder="Reste en CDF" readonly style="background:#e2e8f0; font-weight:bold;">
-            </div>
-            <button onclick="execRM()" style="background:var(--s); margin-top:5px;">VALIDER LE RETRAIT</button>
-        </div>
+<h3>💱 BUREAU DE CHANGE</h3>
+<select id="chDir">
+<option value="buy">Achat USD</option>
+<option value="sell">Vente USD</option>
+</select>
+<input type="number" id="chAmt" placeholder="Montant USD">
+<input type="number" id="chRate" placeholder="Taux">
+<button onclick="execChange()">Valider Change</button>
 
-        <div class="section-title">🔄 MOUVEMENTS (VENTE STOCK, DETTE, DEPENSE)</div>
-        <div class="action-card">
-            <select id="opTypeSelect"></select>
-            <div class="grid"><select id="src" title="Source"></select><select id="dst" title="Destination"></select></div>
-            <div class="grid">
-                <input type="number" id="amt" placeholder="Montant">
-                <select id="cur"><option value="USD">USD</option><option value="CDF">CDF</option></select>
-            </div>
-            <button onclick="execMove()" style="background:var(--i); margin-top:5px;">VALIDER L'OPÉRATION</button>
-        </div>
+<h3>🏧 RETRAIT CLIENT (MIXTE)</h3>
+<select id="retAcc"></select>
+<input type="number" id="retTotal" placeholder="Montant à retirer USD">
+<input type="number" id="retCashUSD" placeholder="Donner en USD">
+<input type="number" id="retCashCDF" placeholder="Donner en CDF">
+<button onclick="execRetrait()">Valider Retrait</button>
 
-        <div id="adminPanel" class="hidden" style="background:#f5f3ff; padding:15px; border-radius:12px; margin-top:25px; border:2px solid var(--a);">
-            <h3 style="margin:0; color:var(--a); font-size:14px;">🔐 ADMINISTRATION & CONFIG</h3>
-            
-            <div class="section-title">Ajuster Soldes (Correction)</div>
-            <select id="adjT"></select>
-            <div class="grid"><input type="number" id="adjU" placeholder="Nouv. USD"><input type="number" id="adjC" placeholder="Nouv. CDF"></div>
-            <button onclick="execAdj()" style="background:var(--d)">ÉCRASER ET METTRE À JOUR</button>
+<h3>🔄 MOUVEMENTS INTERNES</h3>
+<select id="moveType">
+<option value="Dette">Paiement Dette</option>
+<option value="DepenseCash">Dépense Cash</option>
+<option value="DepenseVirtuelle">Dépense Virtuelle</option>
+<option value="Reappro">Réapprovisionnement</option>
+<option value="Transfert">Transfert Interne</option>
+</select>
+<select id="moveSrc"></select>
+<select id="moveDst"></select>
+<input type="number" id="moveAmt" placeholder="Montant">
+<select id="moveCur">
+<option value="USD">USD</option>
+<option value="CDF">CDF</option>
+</select>
+<button onclick="execMoveSecure()">Valider Mouvement</button>
 
-            <div class="section-title">Créer Compte / SIM</div>
-            <div class="grid"><input type="text" id="nn" placeholder="Nom"><button onclick="addAcc()" style="background:var(--a)">+ CRÉER</button></div>
+<h3>📜 HISTORIQUE</h3>
+<div id="histContent"></div>
 
-            <div class="section-title">Réglage des Taux</div>
-            <div class="grid"><input type="number" id="setT" placeholder="Taux Marché"><input type="number" id="setTR" placeholder="Taux Retrait"></div>
-            <button onclick="upT()" style="background:var(--p)">MAJ TAUX</button>
-            
-            <div class="section-title">Gestion de la liste</div>
-            <div id="delList"></div>
-        </div>
-    </div>
+<button onclick="exportPDF()">📄 Rapport PDF</button>
+<button onclick="exportJSON()">💾 Backup JSON</button>
+
+</div>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
-    const conf = { apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs", databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com", projectId: "mka-mobile-money" };
-    const app = initializeApp(conf);
-    const db = getDatabase(app);
-    
-    let data = { caisse: {USD:0, CDF:0}, accounts: [], history: [], types: ["Vente Stock", "Paiement Dette", "Dépense Cash", "Dépense Virtuelle", "Réappro Stock"], taux: 2850, tauxRet: 2800 };
+const firebaseConfig = {
+apiKey:"TA_CLE",
+authDomain:"TON_DOMAINE.firebaseapp.com",
+databaseURL:"TON_URL",
+projectId:"TON_PROJECT_ID"
+};
 
-    onValue(ref(db, 'mka_data'), (s) => { if(s.val()){ data = s.val(); render(); }});
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
 
-    const pushData = (m) => { 
-        data.history.unshift({d: new Date().toLocaleString('fr-FR'), m});
-        if(data.history.length > 50) data.history.pop();
-        set(ref(db, 'mka_data'), data);
-    };
+let data = {
+caisse:{USD:0,CDF:0},
+accounts:[],
+history:[],
+taux:2850
+};
 
-    window.login = () => {
-        const p = document.getElementById("pin").value;
-        if(p === "admin1011") { document.getElementById("loginPage").classList.add("hidden"); document.getElementById("mainApp").classList.remove("hidden"); document.getElementById("adminPanel").classList.remove("hidden"); }
-        else if(p === "1320") { document.getElementById("loginPage").classList.add("hidden"); document.getElementById("mainApp").classList.remove("hidden"); }
-        else alert("PIN Erroné");
-    };
+const val = (id)=>{
+const v=parseFloat(document.getElementById(id).value);
+return isNaN(v)?0:v;
+};
 
-    // LOGIQUE CHANGE
-    window.calcCh = () => { const a = document.getElementById("chAmt").value; const r = document.getElementById("chRate").value || data.taux; document.getElementById("chRes").value = Math.round(a * r); };
-    window.execChange = () => {
-        const d = document.getElementById("chDir").value; const u = parseFloat(document.getElementById("chAmt").value); const c = parseFloat(document.getElementById("chRes").value);
-        if(u > 0) {
-            if(d === "buy") { data.caisse.USD += u; data.caisse.CDF -= c; } else { data.caisse.USD -= u; data.caisse.CDF += c; }
-            pushData(`CHANGE: ${d==="buy"?"Achat":"Vente"} de ${u}$ au taux ${document.getElementById("chRate").value}`);
-            alert("Change effectué");
-        }
-    };
+onAuthStateChanged(auth,(user)=>{
+if(user){
+document.getElementById("loginPage").classList.add("hidden");
+document.getElementById("mainApp").classList.remove("hidden");
+loadData();
+}else{
+document.getElementById("loginPage").classList.remove("hidden");
+document.getElementById("mainApp").classList.add("hidden");
+}
+});
 
-    // LOGIQUE RETRAIT MIXTE
-    window.calcRM = () => {
-        const t = document.getElementById("retTot").value; const f = document.getElementById("retFr").value; const g = document.getElementById("gU").value;
-        const res = (t - f - g) * data.tauxRet; document.getElementById("gC").value = res > 0 ? Math.round(res) : 0;
-    };
-    window.execRM = () => {
-        const i = document.getElementById("retSim").value; const t = parseFloat(document.getElementById("retTot").value); const u = parseFloat(document.getElementById("gU").value); const c = parseFloat(document.getElementById("gC").value);
-        if(t > 0) {
-            data.accounts[i].USD += t; data.caisse.USD -= u; data.caisse.CDF -= c;
-            pushData(`RETRAIT: ${data.accounts[i].name} (+${t}$ virt.), Cash sorti: ${u}$ et ${c}FC`);
-            alert("Retrait validé");
-        }
-    };
+window.login = async ()=>{
+try{
+await signInWithEmailAndPassword(auth,
+document.getElementById("email").value,
+document.getElementById("password").value);
+}catch(e){ alert("Connexion refusée"); }
+};
 
-    // LOGIQUE MOUVEMENTS UNIVERSELS
-    window.execMove = () => {
-        const tp = document.getElementById("opTypeSelect").value; const s = document.getElementById("src").value; const d = document.getElementById("dst").value;
-        const a = parseFloat(document.getElementById("amt").value); const c = document.getElementById("cur").value;
-        if(a > 0 && s !== d) {
-            if(s === "c") data.caisse[c] -= a; else data.accounts[s][c] -= a;
-            if(d === "c") data.caisse[c] += a; else data.accounts[d][c] += a;
-            pushData(`${tp}: ${s==="c"?"Caisse":data.accounts[s].name} vers ${d==="c"?"Caisse":data.accounts[d].name} (${a}${c})`);
-            alert("Opération réussie");
-        }
-    };
+window.logout = ()=> signOut(auth);
 
-    // LOGIQUE ADMIN
-    window.execAdj = () => {
-        const t = document.getElementById("adjT").value; const u = parseFloat(document.getElementById("adjU").value); const c = parseFloat(document.getElementById("adjC").value);
-        if(t === "c") { data.caisse.USD = u; data.caisse.CDF = c; } else { data.accounts[t].USD = u; data.accounts[t].CDF = c; }
-        pushData(`AJUSTEMENT ADMIN sur ${t==="c"?"Caisse":data.accounts[t].name}`); alert("Soldes forcés avec succès");
-    };
-    window.addAcc = () => { const n = document.getElementById("nn").value; if(n){ data.accounts.push({name:n, USD:0, CDF:0}); pushData(`COMPTE CRÉÉ: ${n}`); document.getElementById("nn").value=""; }};
-    window.upT = () => { data.taux = parseFloat(document.getElementById("setT").value) || data.taux; data.tauxRet = parseFloat(document.getElementById("setTR").value) || data.tauxRet; pushData(`TAUX MIS À JOUR`); alert("Taux enregistrés"); };
-    window.delAcc = (i) => { if(confirm("Supprimer ?")){ data.accounts.splice(i,1); pushData("COMPTE SUPPRIMÉ"); set(ref(db, 'mka_data'), data); }};
-    window.toggleHist = () => document.getElementById("histBox").classList.toggle("hidden");
+function loadData(){
+onValue(ref(db,"mka_data"),(snap)=>{
+if(snap.val()) data=snap.val();
+render();
+});
+}
 
-    function render() {
-        document.getElementById("tauxDisp").innerText = data.taux;
-        document.getElementById("tauxRetDisp").innerText = data.tauxRet;
-        document.getElementById("cashUSD").innerText = data.caisse.USD.toFixed(2);
-        document.getElementById("cashCDF").innerText = data.caisse.CDF.toLocaleString();
-        if(!document.getElementById("chRate").value) document.getElementById("chRate").value = data.taux;
+function saveData(message){
+const user=auth.currentUser.email;
+data.history.unshift({
+d:new Date().toLocaleString("fr-FR"),
+m:message,
+user
+});
+if(data.history.length>200) data.history.pop();
+set(ref(db,"mka_data"),data);
+}
 
-        let vnc = data.caisse.USD + (data.caisse.CDF / data.taux);
-        document.getElementById("accountList").innerHTML = data.accounts.map((a, i) => {
-            vnc += a.USD + (a.CDF / data.taux);
-            return `<div class="card"><b>${a.name}</b><span class="${a.USD<0?'neg':'pos'}">${a.USD.toFixed(1)}$ | ${a.CDF}F</span></div>`;
-        }).join("");
-        document.getElementById("vncDisp").innerText = vnc.toFixed(2) + " $";
+window.execChange = ()=>{
+const u=val("chAmt");
+const rate=val("chRate")||data.taux;
+const c=Math.round(u*rate);
+const dir=document.getElementById("chDir").value;
 
-        const opts = `<option value="c">💰 CAISSE CASH</option>` + data.accounts.map((a,i)=>`<option value="${i}">${a.name}</option>`).join("");
-        document.getElementById("src").innerHTML = opts; document.getElementById("dst").innerHTML = opts;
-        document.getElementById("retSim").innerHTML = data.accounts.map((a,i)=>`<option value="${i}">${a.name}</option>`).join("");
-        document.getElementById("adjT").innerHTML = opts;
-        document.getElementById("opTypeSelect").innerHTML = data.types.map(t => `<option>${t}</option>`).join("");
-        document.getElementById("histContent").innerHTML = data.history.map(h => `<div class="hist-item"><b>[${h.d}]</b> ${h.m}</div>`).join("");
-        document.getElementById("delList").innerHTML = data.accounts.map((a,i)=>`<div style="display:flex; justify-content:space-between; font-size:10px; margin-top:5px;">${a.name} <button onclick="delAcc(${i})" style="background:var(--d); padding:2px 5px; width:auto;">X</button></div>`).join("");
-    }
+if(u<=0) return alert("Montant invalide");
+
+if(dir==="buy"){
+if(data.caisse.CDF<c) return alert("CDF insuffisant");
+data.caisse.USD+=u;
+data.caisse.CDF-=c;
+}else{
+if(data.caisse.USD<u) return alert("USD insuffisant");
+data.caisse.USD-=u;
+data.caisse.CDF+=c;
+}
+
+saveData(`CHANGE ${dir} ${u}$`);
+};
+
+window.execRetrait = ()=>{
+const i=document.getElementById("retAcc").value;
+if(!data.accounts[i]) return alert("Compte invalide");
+
+const total=val("retTotal");
+const usd=val("retCashUSD");
+const cdf=val("retCashCDF");
+
+if(total<=0) return alert("Montant invalide");
+
+const equiv=usd+(cdf/data.taux);
+if(equiv>total) return alert("Vous donnez plus que le retrait");
+
+if(data.accounts[i].USD<total)
+return alert("Solde virtuel insuffisant");
+
+if(data.caisse.USD<usd || data.caisse.CDF<cdf)
+return alert("Caisse insuffisante");
+
+data.accounts[i].USD-=total;
+data.caisse.USD-=usd;
+data.caisse.CDF-=cdf;
+
+saveData(`RETRAIT ${data.accounts[i].name} -${total}$`);
+};
+
+window.execMoveSecure = ()=>{
+const type=document.getElementById("moveType").value;
+const s=document.getElementById("moveSrc").value;
+const d=document.getElementById("moveDst").value;
+const amt=val("moveAmt");
+const cur=document.getElementById("moveCur").value;
+
+if(amt<=0||s===d) return alert("Opération invalide");
+
+const source=s==="c"?data.caisse:data.accounts[s];
+const dest=d==="c"?data.caisse:data.accounts[d];
+
+if(!source||!dest) return alert("Erreur compte");
+if(source[cur]<amt) return alert("Solde insuffisant");
+
+source[cur]-=amt;
+dest[cur]+=amt;
+
+saveData(`${type}: ${amt} ${cur}`);
+};
+
+function render(){
+document.getElementById("cashUSD").innerText=data.caisse.USD.toFixed(2);
+document.getElementById("cashCDF").innerText=data.caisse.CDF;
+
+let vnc=data.caisse.USD+(data.caisse.CDF/data.taux);
+
+document.getElementById("accountList").innerHTML=
+data.accounts.map(a=>{
+vnc+=a.USD+(a.CDF/data.taux);
+return `<div class="card">${a.name} : ${a.USD}$ | ${a.CDF}F</div>`;
+}).join("");
+
+document.getElementById("vncDisp").innerText=vnc.toFixed(2)+" $";
+
+document.getElementById("histContent").innerHTML=
+data.history.map(h=>
+`<div class="hist-item">[${h.d}] (${h.user}) ${h.m}</div>`
+).join("");
+
+const opts=`<option value="c">💰 CAISSE</option>`+
+data.accounts.map((a,i)=>
+`<option value="${i}">${a.name}</option>`).join("");
+
+document.getElementById("moveSrc").innerHTML=opts;
+document.getElementById("moveDst").innerHTML=opts;
+document.getElementById("retAcc").innerHTML=
+data.accounts.map((a,i)=>
+`<option value="${i}">${a.name}</option>`).join("");
+}
+
+window.exportJSON=()=>{
+const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="mka_backup.json";
+a.click();
+};
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+function exportPDF(){
+const { jsPDF } = window.jspdf;
+const doc=new jsPDF();
+doc.text("MKA PRO V18.1 RAPPORT",10,10);
+let y=20;
+document.querySelectorAll(".hist-item").forEach(el=>{
+doc.text(el.innerText,10,y);
+y+=7;
+if(y>280){doc.addPage();y=10;}
+});
+doc.save("rapport_mka.pdf");
+}
+</script>
+
 </body>
-</html>
+    </html>
