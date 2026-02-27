@@ -3,194 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA PRO V9 - CONTRÔLE ABSOLU</title>
+    <title>MKA PRO V16.1 - VERSION FINALE</title>
     <style>
-        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; --info: #3b82f6; --admin: #8b5cf6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--primary); margin: 0; color: white; padding-bottom: 50px; }
-        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        input, select, button { padding: 12px; margin: 5px 0; border-radius: 10px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; font-size: 14px; }
-        button { cursor: pointer; background: var(--primary); color: white; font-weight: bold; border: none; transition: 0.3s; }
-        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid var(--warning); margin-bottom: 15px; }
-        .vnc-val { font-size: 28px; font-weight: bold; color: var(--warning); }
-        .card { background: #f8fafc; padding: 12px; margin: 8px 0; border-radius: 10px; border-left: 6px solid var(--primary); font-size: 14px; display: flex; justify-content: space-between; }
+        :root { --p: #0f172a; --s: #16a34a; --d: #ef4444; --w: #facc15; --a: #8b5cf6; --i: #3b82f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--p); margin: 0; color: white; padding-bottom: 30px; }
+        .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; min-height: 95vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; font-size: 14px; }
+        button { cursor: pointer; background: var(--p); color: white; font-weight: bold; border: none; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 15px; border-radius: 12px; text-align: center; border: 2px solid var(--w); margin-bottom: 10px; }
+        .vnc-val { font-size: 28px; font-weight: bold; color: var(--w); }
+        .card { background: #f8fafc; padding: 10px; margin: 5px 0; border-radius: 8px; border-left: 5px solid var(--p); font-size: 13px; display: flex; justify-content: space-between; border: 1px solid #e2e8f0; align-items: center; }
         .hidden { display: none !important; }
-        .section-title { font-size: 12px; font-weight: 800; color: #64748b; margin-top: 15px; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+        .section-title { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-top: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 3px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .admin-panel { background: #f5f3ff; border: 2px solid var(--admin); padding: 15px; border-radius: 15px; margin-top: 25px; color: black; }
-        .btn-delete { background: var(--danger); padding: 5px 10px; font-size: 10px; width: auto; }
-        .log-box { background: #000; color: #00ff00; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 5px; max-height: 100px; overflow-y: auto; margin-top: 10px; }
+        .action-card { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; }
+        .pos { color: var(--s); font-weight: bold; }
+        .neg { color: var(--d); font-weight: bold; }
+        .hist-item { font-size: 10px; border-bottom: 1px solid #eee; padding: 5px 0; color: #334155; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="loginSection" style="padding:50px 0; text-align:center;">
-            <h1 style="color:var(--primary);">MKA PRO V9</h1>
-            <input type="password" id="pinInput" placeholder="Code PIN">
-            <button onclick="handleLogin()" style="background:var(--success); padding:18px;">SE CONNECTER</button>
-        </div>
-
-        <div id="appSection" class="hidden">
-            <div class="vnc-box">
-                <span style="font-size: 11px; opacity: 0.8;">CAPITAL TOTAL</span><br>
-                <div class="vnc-val" id="totalVNC">0.00 $</div>
-                <div style="font-size: 12px;">Taux Marché : <span id="displayTaux">0</span> FC</div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <button onclick="location.reload()" style="background:var(--danger); width:auto; padding:8px 15px;">Sortir</button>
-                <div style="text-align:right">
-                    <span id="caisseUSD" style="color:var(--success); font-weight:bold; font-size:18px;">0</span> <small>$</small> | 
-                    <span id="caisseCDF" style="color:var(--success); font-weight:bold; font-size:18px;">0</span> <small>FC</small>
-                </div>
-            </div>
-
-            <div id="operatorBalances"></div>
-
-            <div class="section-title">📱 Mobile Money</div>
-            <div class="grid">
-                <select id="mmOp"></select>
-                <select id="mmType">
-                    <option value="depot">Dépôt (SIM vers Cash)</option>
-                    <option value="retrait">Retrait (Cash vers SIM)</option>
-                </select>
-            </div>
-            <div class="grid"><input type="number" id="mmAmt" placeholder="Montant"><select id="mmCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select></div>
-            <button onclick="doMM()" style="background:var(--success)">Valider MM</button>
-
-            <div class="section-title">💱 Change & 📩 Transfert</div>
-            <div class="grid">
-                <select id="quickAction" onchange="toggleQuickFields()">
-                    <option value="vendre">Vendre $ (Reçoit FC)</option>
-                    <option value="acheter">Acheter $ (Donne FC)</option>
-                    <option value="envoi">Envoi Simple (Cash +)</option>
-                    <option value="reception">Réception Simple (Cash -)</option>
-                </select>
-                <input type="number" id="quickAmt" placeholder="Montant">
-            </div>
-            <div id="changeTauxBox" class="grid">
-                <input type="number" id="quickTaux" placeholder="Taux appliqué">
-                <select disabled><option>Fixé en $</option></select>
-            </div>
-            <button onclick="doQuickAction()" style="background:var(--info)">Valider Action</button>
-
-            <div id="adminSection" class="hidden admin-panel">
-                <h3 style="margin:0; color:var(--admin);">⚙️ ADMINISTRATION</h3>
-                
-                <label class="section-title">Achat Stock (Recharge)</label>
-                <select id="rechDest"></select>
-                <div class="grid"><input type="number" id="rechAmt" placeholder="Montant"><select id="rechCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select></div>
-                <select id="rechSource" onchange="document.getElementById('rechSimBox').classList.toggle('hidden', this.value !== 'sim')">
-                    <option value="caisse">Tiroir Cash</option>
-                    <option value="sim">Autre SIM</option>
-                    <option value="externe">Externe</option>
-                </select>
-                <div id="rechSimBox" class="hidden"><select id="rechSrcSim"></select></div>
-                <input type="number" id="rechPrice" placeholder="Taux d'achat">
-                <button onclick="doRecharge()" style="background:var(--admin)">Enregistrer Stock</button>
-
-                <label class="section-title">Gestion des Opérateurs</label>
-                <div id="adminOpList"></div>
-                <div class="grid"><input type="text" id="newSimName" placeholder="Nom SIM"><button onclick="addSim()">+ Ajouter</button></div>
-
-                <label class="section-title">Ajustement Forcé & Taux</label>
-                <div class="grid"><input type="number" id="marketTaux" placeholder="Taux Marché"><button onclick="updateTaux()">MAJ Taux</button></div>
-                <select id="fixSelect"><option value="caisse">Tiroir Cash</option></select>
-                <div class="grid"><input type="number" id="fixUSD" placeholder="Force $"><input type="number" id="fixCDF" placeholder="Force FC"></div>
-                <button onclick="doFix()" style="background:var(--danger)">Forcer Soldes</button>
-
-                <div class="log-box" id="logs"></div>
-            </div>
-        </div>
+<div class="container">
+    <div id="loginPage" style="padding:50px 0; text-align:center;">
+        <h2 style="color:var(--p); margin-bottom:30px;">MKA PRO V16.1<br><small style="font-size:12px; color:#64748b;">Système de Gestion Intégral</small></h2>
+        <input type="password" id="pin" placeholder="ENTREZ VOTRE PIN" style="text-align:center; font-size:20px; letter-spacing:5px;">
+        <button onclick="login()" style="background:var(--s); margin-top:20px;">OUVRIR LA SESSION</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+    <div id="mainApp" class="hidden">
+        <div class="vnc-box">
+            <small>VALEUR NETTE COMPTABLE (VNC)</small><br>
+            <div class="vnc-val" id="vncDisp">0.00 $</div>
+            <div style="font-size:11px;">Taux Marché: <span id="tauxDisp">0</span> | Taux Retrait: <span id="tauxRetDisp">0</span></div>
+        </div>
 
-        const firebaseConfig = { apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs", databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com", projectId: "mka-mobile-money" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        let data = { caisse: {USD:0, CDF:0}, operators: [], logs: [], taux: 2850 };
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap:5px;">
+            <button onclick="location.reload()" style="background:var(--d); flex:1;">Quitter</button>
+            <button onclick="toggleHist()" style="background:var(--i); flex:1;">📜 Journal</button>
+            <div style="text-align:right; flex:1.5;">
+                <span id="cashUSD" class="pos" style="font-size:16px;">0</span> $ <br>
+                <span id="cashCDF" class="pos" style="font-size:14px;">0</span> FC
+            </div>
+        </div>
 
-        onValue(ref(db, 'mka_data'), (snap) => { if(snap.val()){ data = snap.val(); if(!data.logs) data.logs = []; render(); }});
+        <div id="accountList"></div>
 
-        const save = () => set(ref(db, 'mka_data'), data);
-        const log = (m) => { data.logs.unshift(`${new Date().toLocaleTimeString()}: ${m}`); if(data.logs.length > 10) data.logs.pop(); };
+        <div id="histBox" class="hidden action-card" style="max-height: 200px; overflow-y: auto; background:white;">
+            <div class="section-title">Derniers mouvements</div>
+            <div id="histContent"></div>
+        </div>
 
-        window.handleLogin = () => {
-            const p = document.getElementById("pinInput").value;
-            if(p === "admin1011") { document.getElementById("loginSection").classList.add("hidden"); document.getElementById("appSection").classList.remove("hidden"); document.getElementById("adminSection").classList.remove("hidden"); }
-            else if(p === "1320") { document.getElementById("loginSection").classList.add("hidden"); document.getElementById("appSection").classList.remove("hidden"); }
-            else alert("PIN incorrect");
-        };
+        <div class="section-title">💱 BUREAU DE CHANGE (CASH)</div>
+        <div class="action-card">
+            <div class="grid">
+                <select id="chDir"><option value="buy">J'achète $ (Donne FC)</option><option value="sell">Je vends $ (Reçois FC)</option></select>
+                <input type="number" id="chAmt" placeholder="Montant USD" oninput="calcCh()">
+            </div>
+            <div class="grid">
+                <input type="number" id="chRate" placeholder="Taux appliqué">
+                <input type="number" id="chRes" placeholder="Résultat FC" readonly style="background:#e2e8f0; font-weight:bold;">
+            </div>
+            <button onclick="execChange()" style="background:var(--w); color:black; margin-top:5px;">VALIDER LE CHANGE</button>
+        </div>
 
-        window.doMM = () => {
-            const opI = document.getElementById("mmOp").value;
-            const type = document.getElementById("mmType").value;
-            const amt = parseFloat(document.getElementById("mmAmt").value) || 0;
-            const cur = document.getElementById("mmCurr").value;
-            if(amt <= 0) return;
-            if(type === "depot") { data.caisse[cur] += amt; data.operators[opI][cur] -= amt; }
-            else { data.caisse[cur] -= amt; data.operators[opI][cur] += amt; }
-            log(`${type} ${data.operators[opI].name}: ${amt}${cur}`); save(); alert("Validé");
-        };
+        <div class="section-title">🏧 RETRAIT MIXTE (CLIENT)</div>
+        <div class="action-card">
+            <select id="retSim"></select>
+            <div class="grid">
+                <input type="number" id="retTot" placeholder="Total SIM ($)" oninput="calcRM()">
+                <input type="number" id="retFr" placeholder="Frais Cash ($)" oninput="calcRM()">
+            </div>
+            <div class="grid">
+                <input type="number" id="gU" placeholder="Donner USD Cash" oninput="calcRM()">
+                <input type="number" id="gC" placeholder="Reste en CDF" readonly style="background:#e2e8f0; font-weight:bold;">
+            </div>
+            <button onclick="execRM()" style="background:var(--s); margin-top:5px;">VALIDER LE RETRAIT</button>
+        </div>
 
-        window.doQuickAction = () => {
-            const act = document.getElementById("quickAction").value;
-            const amt = parseFloat(document.getElementById("quickAmt").value) || 0;
-            const tx = parseFloat(document.getElementById("quickTaux").value) || data.taux;
-            if(amt <= 0) return;
-            if(act === "vendre") { data.caisse.USD -= amt; data.caisse.CDF += (amt * tx); }
-            else if(act === "acheter") { data.caisse.USD += amt; data.caisse.CDF -= (amt * tx); }
-            else if(act === "envoi") { data.caisse.USD += amt; } // Exemple simplifié en USD
-            else if(act === "reception") { data.caisse.USD -= amt; }
-            log(`Action ${act}: ${amt}`); save(); alert("Enregistré");
-        };
+        <div class="section-title">🔄 MOUVEMENTS (VENTE STOCK, DETTE, DEPENSE)</div>
+        <div class="action-card">
+            <select id="opTypeSelect"></select>
+            <div class="grid"><select id="src" title="Source"></select><select id="dst" title="Destination"></select></div>
+            <div class="grid">
+                <input type="number" id="amt" placeholder="Montant">
+                <select id="cur"><option value="USD">USD</option><option value="CDF">CDF</option></select>
+            </div>
+            <button onclick="execMove()" style="background:var(--i); margin-top:5px;">VALIDER L'OPÉRATION</button>
+        </div>
 
-        window.doRecharge = () => {
-            const dI = document.getElementById("rechDest").value;
-            const amt = parseFloat(document.getElementById("rechAmt").value) || 0;
-            const cur = document.getElementById("rechCurr").value;
-            const src = document.getElementById("rechSource").value;
-            data.operators[dI][cur] += amt;
-            data.operators[dI].buyPrice = parseFloat(document.getElementById("rechPrice").value) || data.taux;
-            if(src === "caisse") data.caisse[cur] -= amt;
-            if(src === "sim") data.operators[document.getElementById("rechSrcSim").value][cur] -= amt;
-            log(`Recharge ${data.operators[dI].name}`); save(); alert("Stock OK");
-        };
-
-        window.addSim = () => { const n = document.getElementById("newSimName").value; if(n){ data.operators.push({name:n, USD:0, CDF:0, buyPrice:data.taux}); save(); }};
-        window.deleteSim = (i) => { if(confirm("Supprimer cette SIM ?")){ data.operators.splice(i, 1); save(); }};
-        window.updateTaux = () => { const t = document.getElementById("marketTaux").value; if(t){ data.taux = parseFloat(t); save(); }};
-
-        window.doFix = () => {
-            const target = document.getElementById("fixSelect").value;
-            const u = document.getElementById("fixUSD").value;
-            const c = document.getElementById("fixCDF").value;
-            if(target === "caisse") { if(u!=="") data.caisse.USD = parseFloat(u); if(c!=="") data.caisse.CDF = parseFloat(c); }
-            else { if(u!=="") data.operators[target].USD = parseFloat(u); if(c!=="") data.operators[target].CDF = parseFloat(c); }
-            log("Correction Admin"); save(); alert("Forçage OK");
-        };
-
-        function render() {
-            document.getElementById("displayTaux").innerText = data.taux;
-            document.getElementById("caisseUSD").innerText = data.caisse.USD.toFixed(2);
-            document.getElementById("caisseCDF").innerText = data.caisse.CDF.toLocaleString();
-            let vnc = data.caisse.USD + (data.caisse.CDF / data.taux);
-            data.operators.forEach(o => { vnc += o.USD + (o.CDF / (o.buyPrice || data.taux)); });
-            document.getElementById("totalVNC").innerText = vnc.toFixed(2) + " $";
-
-            const opts = data.operators.map((o,i) => `<option value="${i}">${o.name}</option>`).join("");
-            document.getElementById("mmOp").innerHTML = opts;
-            document.getElementById("rechDest").innerHTML = opts;
-            document.getElementById("rechSrcSim").innerHTML = opts;
-            document.getElementById("fixSelect").innerHTML = `<option value="caisse">Tiroir Cash</option>` + opts;
+        <div id="adminPanel" class="hidden" style="background:#f5f3ff; padding:15px; border-radius:12px; margin-top:25px; border:2px solid var(--a);">
+            <h3 style="margin:0; color:var(--a); font-size:14px;">🔐 ADMINISTRATION & CONFIG</h3>
             
-            document.getElementById("operatorBalances").innerHTML = data.operators.map(o => `<div class="card"><b>${o.name}</b><span>${o.USD.toFixed(2)}$ | ${o.CDF}FC</span></div>`).join("");
-            document.getElementById("adminOpList").innerHTML = data.operators.map((o,i) => `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">${o.name} <button class="btn-delete" onclick="deleteSim(${i})">Supprimer</button></div>`).join("");
-            document.getElementById("logs").innerHTML = data.logs.join("<br>");
+            <div class="section-title">Ajuster Soldes (Correction)</div>
+            <select id="adjT"></select>
+            <div class="grid"><input type="number" id="adjU" placeholder="Nouv. USD"><input type="number" id="adjC" placeholder="Nouv. CDF"></div>
+            <button onclick="execAdj()" style="background:var(--d)">ÉCRASER ET METTRE À JOUR</button>
+
+            <div class="section-title">Créer Compte / SIM</div>
+            <div class="grid"><input type="text" id="nn" placeholder="Nom"><button onclick="addAcc()" style="background:var(--a)">+ CRÉER</button></div>
+
+            <div class="section-title">Réglage des Taux</div>
+            <div class="grid"><input type="number" id="setT" placeholder="Taux Marché"><input type="number" id="setTR" placeholder="Taux Retrait"></div>
+            <button onclick="upT()" style="background:var(--p)">MAJ TAUX</button>
+            
+            <div class="section-title">Gestion de la liste</div>
+            <div id="delList"></div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+    const conf = { apiKey: "AIzaSyDSK9sIPu8fvGebZQG9EdHBhlf7nl8Dmzs", databaseURL: "https://mka-mobile-money-default-rtdb.firebaseio.com", projectId: "mka-mobile-money" };
+    const app = initializeApp(conf);
+    const db = getDatabase(app);
+    
+    let data = { caisse: {USD:0, CDF:0}, accounts: [], history: [], types: ["Vente Stock", "Paiement Dette", "Dépense Cash", "Dépense Virtuelle", "Réappro Stock"], taux: 2850, tauxRet: 2800 };
+
+    onValue(ref(db, 'mka_data'), (s) => { if(s.val()){ data = s.val(); render(); }});
+
+    const pushData = (m) => { 
+        data.history.unshift({d: new Date().toLocaleString('fr-FR'), m});
+        if(data.history.length > 50) data.history.pop();
+        set(ref(db, 'mka_data'), data);
+    };
+
+    window.login = () => {
+        const p = document.getElementById("pin").value;
+        if(p === "admin1011") { document.getElementById("loginPage").classList.add("hidden"); document.getElementById("mainApp").classList.remove("hidden"); document.getElementById("adminPanel").classList.remove("hidden"); }
+        else if(p === "1320") { document.getElementById("loginPage").classList.add("hidden"); document.getElementById("mainApp").classList.remove("hidden"); }
+        else alert("PIN Erroné");
+    };
+
+    // LOGIQUE CHANGE
+    window.calcCh = () => { const a = document.getElementById("chAmt").value; const r = document.getElementById("chRate").value || data.taux; document.getElementById("chRes").value = Math.round(a * r); };
+    window.execChange = () => {
+        const d = document.getElementById("chDir").value; const u = parseFloat(document.getElementById("chAmt").value); const c = parseFloat(document.getElementById("chRes").value);
+        if(u > 0) {
+            if(d === "buy") { data.caisse.USD += u; data.caisse.CDF -= c; } else { data.caisse.USD -= u; data.caisse.CDF += c; }
+            pushData(`CHANGE: ${d==="buy"?"Achat":"Vente"} de ${u}$ au taux ${document.getElementById("chRate").value}`);
+            alert("Change effectué");
         }
-    </script>
+    };
+
+    // LOGIQUE RETRAIT MIXTE
+    window.calcRM = () => {
+        const t = document.getElementById("retTot").value; const f = document.getElementById("retFr").value; const g = document.getElementById("gU").value;
+        const res = (t - f - g) * data.tauxRet; document.getElementById("gC").value = res > 0 ? Math.round(res) : 0;
+    };
+    window.execRM = () => {
+        const i = document.getElementById("retSim").value; const t = parseFloat(document.getElementById("retTot").value); const u = parseFloat(document.getElementById("gU").value); const c = parseFloat(document.getElementById("gC").value);
+        if(t > 0) {
+            data.accounts[i].USD += t; data.caisse.USD -= u; data.caisse.CDF -= c;
+            pushData(`RETRAIT: ${data.accounts[i].name} (+${t}$ virt.), Cash sorti: ${u}$ et ${c}FC`);
+            alert("Retrait validé");
+        }
+    };
+
+    // LOGIQUE MOUVEMENTS UNIVERSELS
+    window.execMove = () => {
+        const tp = document.getElementById("opTypeSelect").value; const s = document.getElementById("src").value; const d = document.getElementById("dst").value;
+        const a = parseFloat(document.getElementById("amt").value); const c = document.getElementById("cur").value;
+        if(a > 0 && s !== d) {
+            if(s === "c") data.caisse[c] -= a; else data.accounts[s][c] -= a;
+            if(d === "c") data.caisse[c] += a; else data.accounts[d][c] += a;
+            pushData(`${tp}: ${s==="c"?"Caisse":data.accounts[s].name} vers ${d==="c"?"Caisse":data.accounts[d].name} (${a}${c})`);
+            alert("Opération réussie");
+        }
+    };
+
+    // LOGIQUE ADMIN
+    window.execAdj = () => {
+        const t = document.getElementById("adjT").value; const u = parseFloat(document.getElementById("adjU").value); const c = parseFloat(document.getElementById("adjC").value);
+        if(t === "c") { data.caisse.USD = u; data.caisse.CDF = c; } else { data.accounts[t].USD = u; data.accounts[t].CDF = c; }
+        pushData(`AJUSTEMENT ADMIN sur ${t==="c"?"Caisse":data.accounts[t].name}`); alert("Soldes forcés avec succès");
+    };
+    window.addAcc = () => { const n = document.getElementById("nn").value; if(n){ data.accounts.push({name:n, USD:0, CDF:0}); pushData(`COMPTE CRÉÉ: ${n}`); document.getElementById("nn").value=""; }};
+    window.upT = () => { data.taux = parseFloat(document.getElementById("setT").value) || data.taux; data.tauxRet = parseFloat(document.getElementById("setTR").value) || data.tauxRet; pushData(`TAUX MIS À JOUR`); alert("Taux enregistrés"); };
+    window.delAcc = (i) => { if(confirm("Supprimer ?")){ data.accounts.splice(i,1); pushData("COMPTE SUPPRIMÉ"); set(ref(db, 'mka_data'), data); }};
+    window.toggleHist = () => document.getElementById("histBox").classList.toggle("hidden");
+
+    function render() {
+        document.getElementById("tauxDisp").innerText = data.taux;
+        document.getElementById("tauxRetDisp").innerText = data.tauxRet;
+        document.getElementById("cashUSD").innerText = data.caisse.USD.toFixed(2);
+        document.getElementById("cashCDF").innerText = data.caisse.CDF.toLocaleString();
+        if(!document.getElementById("chRate").value) document.getElementById("chRate").value = data.taux;
+
+        let vnc = data.caisse.USD + (data.caisse.CDF / data.taux);
+        document.getElementById("accountList").innerHTML = data.accounts.map((a, i) => {
+            vnc += a.USD + (a.CDF / data.taux);
+            return `<div class="card"><b>${a.name}</b><span class="${a.USD<0?'neg':'pos'}">${a.USD.toFixed(1)}$ | ${a.CDF}F</span></div>`;
+        }).join("");
+        document.getElementById("vncDisp").innerText = vnc.toFixed(2) + " $";
+
+        const opts = `<option value="c">💰 CAISSE CASH</option>` + data.accounts.map((a,i)=>`<option value="${i}">${a.name}</option>`).join("");
+        document.getElementById("src").innerHTML = opts; document.getElementById("dst").innerHTML = opts;
+        document.getElementById("retSim").innerHTML = data.accounts.map((a,i)=>`<option value="${i}">${a.name}</option>`).join("");
+        document.getElementById("adjT").innerHTML = opts;
+        document.getElementById("opTypeSelect").innerHTML = data.types.map(t => `<option>${t}</option>`).join("");
+        document.getElementById("histContent").innerHTML = data.history.map(h => `<div class="hist-item"><b>[${h.d}]</b> ${h.m}</div>`).join("");
+        document.getElementById("delList").innerHTML = data.accounts.map((a,i)=>`<div style="display:flex; justify-content:space-between; font-size:10px; margin-top:5px;">${a.name} <button onclick="delAcc(${i})" style="background:var(--d); padding:2px 5px; width:auto;">X</button></div>`).join("");
+    }
+</script>
 </body>
 </html>
