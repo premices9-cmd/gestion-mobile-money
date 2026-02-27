@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro - V6.5 AJUSTEMENT MANUEL</title>
+    <title>MKA Pro - V6.4 FLEX STOCK</title>
     <style>
-        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; --fix: #8b5cf6; }
+        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--primary); margin: 0; color: white; padding-bottom: 40px; }
         .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; }
         input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; }
@@ -13,10 +13,10 @@
         .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 15px; border-radius: 15px; text-align: center; border: 2px solid var(--warning); }
         .vnc-val { font-size: 28px; font-weight: bold; color: var(--warning); }
         .card { background: #f1f5f9; padding: 10px; margin: 8px 0; border-radius: 8px; border-left: 5px solid var(--primary); font-size: 13px; }
+        .neg { color: var(--danger) !important; font-weight: bold; } /* Style pour solde négatif */
         .hidden { display: none !important; }
-        .admin-edit-box { background: #f5f3ff; border: 2px solid var(--fix); padding: 15px; border-radius: 12px; margin-top: 20px; color: black; }
-        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-top: 8px; text-transform: uppercase; }
-        .btn-fix { background: var(--fix); margin-top: 5px; }
+        .recharge-box { background: #f0f9ff; border: 2px solid #0ea5e9; padding: 15px; border-radius: 12px; margin-top: 15px; color: black; }
+        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -24,16 +24,16 @@
     <div class="container">
         <div id="appSection" class="hidden">
             <div class="vnc-box">
-                <span style="font-size: 10px; opacity: 0.8;">CAPITAL TOTAL (VNC)</span><br>
+                <span style="font-size: 10px; opacity: 0.8;">VALEUR NETTE (CASH + STOCKS - DETTES SIM)</span><br>
                 <div class="vnc-val" id="totalVNC">0.00 $</div>
-                <div style="font-size: 11px;">Taux : <span id="displayTaux">0</span> FC</div>
+                <div style="font-size: 11px;">Taux Marché : <span id="displayTaux">0</span> FC</div>
             </div>
 
             <div style="display:flex; justify-content:space-between; margin:15px 0; font-size: 13px;">
-                <button onclick="location.reload()" style="background:var(--danger); width:auto; padding:5px 12px;">Sortir</button>
+                <button onclick="location.reload()" style="background:var(--danger); width:auto; padding:5px 12px;">Quitter</button>
                 <div style="text-align:right">
                     <strong>Tiroir Cash :</strong><br>
-                    <span id="caisseUSD" style="color:var(--success); font-weight:bold;">0</span> $ | <span id="caisseCDF" style="color:var(--success); font-weight:bold;">0</span> FC
+                    <span id="caisseUSD">0</span> $ | <span id="caisseCDF">0</span> FC
                 </div>
             </div>
 
@@ -41,38 +41,45 @@
             <hr>
 
             <div id="adminSection" class="hidden">
-                <div class="admin-edit-box">
-                    <h3 style="margin:0 0 10px 0; color:#5b21b6; font-size:16px;">🔧 AJUSTEMENT MANUEL (ADMIN)</h3>
+                <div class="recharge-box">
+                    <h3 style="margin:0 0 10px 0; color:#0369a1; font-size:16px;">📥 RÉAPPRO / TRANSFERT ENTRE SIM</h3>
                     
-                    <label class="label-sm">Corriger le Cash Tiroir :</label>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <input type="number" id="fixCaisseUSD" placeholder="Nouveau USD">
-                        <input type="number" id="fixCaisseCDF" placeholder="Nouveau CDF">
+                    <label class="label-sm">SIM DESTINATION (Reçoit le stock) :</label>
+                    <select id="rechargeOpDest"></select>
+                    
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:5px;">
+                        <input type="number" id="rechargeAmt" placeholder="Montant">
+                        <select id="rechargeCur"><option value="USD">USD</option><option value="CDF">CDF</option></select>
                     </div>
-                    <button class="btn-fix" onclick="fixCaisse()">Appliquer au Tiroir</button>
 
-                    <hr style="margin:15px 0; border:0; border-top:1px solid #ddd;">
+                    <label class="label-sm">SOURCE DU PAIEMENT :</label>
+                    <select id="rechargeSource" onchange="toggleSource()">
+                        <option value="caisse">Cash du Tiroir</option>
+                        <option value="sim">Payer avec une autre SIM (Airtel Money, etc.)</option>
+                        <option value="externe">Apport Externe / Bonus</option>
+                    </select>
 
-                    <label class="label-sm">Corriger le solde d'une SIM :</label>
-                    <select id="fixSimSelect"></select>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <input type="number" id="fixSimUSD" placeholder="Solde USD">
-                        <input type="number" id="fixSimCDF" placeholder="Solde CDF">
+                    <div id="sourceSimBox" class="hidden">
+                        <label class="label-sm">SIM QUI PAYE (Peut finir en négatif) :</label>
+                        <select id="rechargeOpSource"></select>
                     </div>
-                    <button class="btn-fix" onclick="fixSim()">Appliquer à la SIM</button>
+
+                    <label class="label-sm">TAUX D'ACHAT (Optionnel si 0) :</label>
+                    <input type="number" id="rechargePrice" placeholder="Prix d'achat">
+                    
+                    <button onclick="processRecharge()" style="background:#0ea5e9; margin-top:10px;">VALIDER L'OPÉRATION</button>
                 </div>
 
-                <div style="margin-top:15px;">
-                    <label class="label-sm">Ajouter une nouvelle SIM :</label>
-                    <input type="text" id="newOpName" placeholder="Nom SIM">
-                    <button onclick="addOperator()">+ Ajouter</button>
+                <div style="margin-top:20px;">
+                    <input type="text" id="newOpName" placeholder="Nom de la nouvelle SIM">
+                    <button onclick="addOperator()">+ Ajouter SIM (Même sans stock)</button>
                 </div>
             </div>
         </div>
 
         <div id="loginSection" style="padding:40px 0; text-align:center;">
-            <h1>MKA PRO V6.5</h1>
-            <input type="password" id="pinInput" placeholder="Code PIN">
+            <h1>MKA PRO V6.4</h1>
+            <input type="password" id="pinInput" placeholder="PIN">
             <button onclick="login()" style="width:100%; padding:15px; background:var(--success)">ACCÉDER</button>
         </div>
     </div>
@@ -90,7 +97,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let data = { caisse: {USD:0, CDF:0}, operators: [], tauх: 2850 };
+        let data = { caisse: {USD:0, CDF:0}, operators: [], transactions: [], taux: 2850 };
 
         onValue(ref(db, 'mka_data'), (snap) => {
             if(snap.val()) {
@@ -102,34 +109,43 @@
 
         const save = () => set(ref(db, 'mka_data'), data);
 
-        // FONCTION : AJUSTEMENT CAISSE
-        window.fixCaisse = () => {
-            const usd = document.getElementById("fixCaisseUSD").value;
-            const cdf = document.getElementById("fixCaisseCDF").value;
-            
-            if(usd !== "") data.caisse.USD = parseFloat(usd);
-            if(cdf !== "") data.caisse.CDF = parseFloat(cdf);
-            
-            save();
-            alert("Cash tiroir mis à jour manuellement !");
+        window.toggleSource = () => {
+            document.getElementById("sourceSimBox").classList.toggle("hidden", document.getElementById("rechargeSource").value !== "sim");
         };
 
-        // FONCTION : AJUSTEMENT SIM
-        window.fixSim = () => {
-            const idx = document.getElementById("fixSimSelect").value;
-            const usd = document.getElementById("fixSimUSD").value;
-            const cdf = document.getElementById("fixSimCDF").value;
-            
-            if(usd !== "") data.operators[idx].USD = parseFloat(usd);
-            if(cdf !== "") data.operators[idx].CDF = parseFloat(cdf);
-            
+        window.processRecharge = () => {
+            const destIdx = document.getElementById("rechargeOpDest").value;
+            const amt = parseFloat(document.getElementById("rechargeAmt").value) || 0;
+            const cur = document.getElementById("rechargeCur").value;
+            const source = document.getElementById("rechargeSource").value;
+            const price = parseFloat(document.getElementById("rechargePrice").value) || data.taux;
+
+            if(amt <= 0) return alert("Montant invalide");
+
+            // Créditer destination
+            data.operators[destIdx][cur] = (data.operators[destIdx][cur] || 0) + amt;
+            data.operators[destIdx].buyPrice = price;
+
+            // Débiter source
+            if(source === "caisse") {
+                data.caisse[cur] -= amt;
+            } else if(source === "sim") {
+                const srcIdx = document.getElementById("rechargeOpSource").value;
+                data.operators[srcIdx][cur] = (data.operators[srcIdx][cur] || 0) - amt;
+            }
+
             save();
-            alert("Solde SIM mis à jour manuellement !");
+            alert("Flux enregistré !");
         };
 
         window.addOperator = () => {
             const n = document.getElementById("newOpName").value;
-            if(n) { data.operators.push({ name: n, USD: 0, CDF: 0, buyPrice: data.taux }); save(); }
+            if(n) { 
+                // Création d'une SIM vide par défaut
+                data.operators.push({ name: n, USD: 0, CDF: 0, buyPrice: data.taux }); 
+                save(); 
+                document.getElementById("newOpName").value = "";
+            }
         };
 
         window.login = () => {
@@ -147,16 +163,22 @@
             document.getElementById("caisseUSD").innerText = (data.caisse.USD || 0).toFixed(2);
             document.getElementById("caisseCDF").innerText = (data.caisse.CDF || 0).toLocaleString();
 
-            let vnc = (data.caisse.USD || 0) + ((data.caisse.CDF || 0) / data.taux);
+            let vnc = data.caisse.USD + (data.caisse.CDF / data.taux);
             data.operators.forEach(o => {
                 vnc += (o.USD || 0) + ((o.CDF || 0) / (o.buyPrice || data.taux));
             });
             document.getElementById("totalVNC").innerText = vnc.toFixed(2) + " $";
 
             const opsHtml = data.operators.map((o,i) => `<option value="${i}">${o.name}</option>`).join("");
-            document.getElementById("fixSimSelect").innerHTML = opsHtml;
+            document.getElementById("rechargeOpDest").innerHTML = opsHtml;
+            document.getElementById("rechargeOpSource").innerHTML = opsHtml;
+
             document.getElementById("operatorBalances").innerHTML = data.operators.map(o => `
-                <div class="card"><b>${o.name}</b>: ${o.USD}$ | ${o.CDF}FC</div>
+                <div class="card">
+                    <b>${o.name}</b>: 
+                    <span class="${o.USD < 0 ? 'neg' : ''}">${(o.USD || 0).toFixed(2)}$</span> | 
+                    <span class="${o.CDF < 0 ? 'neg' : ''}">${(o.CDF || 0).toLocaleString()}FC</span>
+                </div>
             `).join("");
         }
     </script>
