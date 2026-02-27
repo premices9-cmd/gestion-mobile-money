@@ -3,76 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro - V6.6 SÉCURITÉ & LOGS</title>
+    <title>MKA PRO V7.5 - TOUT-EN-UN</title>
     <style>
-        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; --fix: #8b5cf6; }
+        :root { --primary: #0f172a; --danger: #ef4444; --success: #16a34a; --warning: #facc15; --info: #0ea5e9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--primary); margin: 0; color: white; padding-bottom: 40px; }
         .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; }
         input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; }
         button { cursor: pointer; background: var(--primary); color: white; font-weight: bold; border: none; }
-        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 15px; border-radius: 15px; text-align: center; border: 2px solid var(--warning); }
-        .vnc-val { font-size: 28px; font-weight: bold; color: var(--warning); }
-        .card { background: #f1f5f9; padding: 10px; margin: 8px 0; border-radius: 8px; border-left: 5px solid var(--primary); font-size: 13px; }
+        .vnc-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 15px; border-radius: 15px; text-align: center; border: 2px solid var(--warning); margin-bottom: 10px; }
+        .vnc-val { font-size: 26px; font-weight: bold; color: var(--warning); }
+        .card { background: #f1f5f9; padding: 10px; margin: 8px 0; border-radius: 8px; border-left: 5px solid var(--primary); font-size: 13px; color: #1e293b; }
         .hidden { display: none !important; }
-        .admin-edit-box { background: #f5f3ff; border: 2px solid var(--fix); padding: 15px; border-radius: 12px; margin-top: 20px; color: black; }
-        .log-item { font-size: 10px; border-bottom: 1px solid #ddd; padding: 5px 0; color: #475569; }
-        .label-sm { font-size: 11px; font-weight: bold; color: #64748b; display: block; margin-top: 8px; text-transform: uppercase; }
+        .section-title { font-size: 14px; font-weight: bold; color: var(--primary); margin-top: 15px; text-transform: uppercase; border-bottom: 1px solid #ddd; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .admin-panel { background: #f5f3ff; border: 2px solid #8b5cf6; padding: 15px; border-radius: 12px; margin-top: 20px; color: black; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <div id="loginSection" style="padding:40px 0; text-align:center;">
+            <h1 style="color:#0f172a">MKA PRO V7.5</h1>
+            <input type="password" id="pinInput" placeholder="Code PIN">
+            <button onclick="handleLogin()" style="background:var(--success)">ENTRER</button>
+        </div>
+
         <div id="appSection" class="hidden">
             <div class="vnc-box">
-                <span style="font-size: 10px; opacity: 0.8;">VALEUR DU BUSINESS (VNC)</span><br>
+                <span style="font-size: 10px; opacity: 0.8;">VALEUR NETTE DU BUSINESS</span><br>
                 <div class="vnc-val" id="totalVNC">0.00 $</div>
+                <div style="font-size: 11px;">Taux : <span id="displayTaux">0</span> FC</div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; margin:15px 0; font-size: 13px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size: 13px;">
                 <button onclick="location.reload()" style="background:var(--danger); width:auto; padding:5px 12px;">Quitter</button>
                 <div style="text-align:right">
-                    <strong>Cash Tiroir :</strong><br>
+                    <strong>Tiroir Cash :</strong><br>
                     <span id="caisseUSD" style="color:var(--success); font-weight:bold;">0</span> $ | <span id="caisseCDF" style="color:var(--success); font-weight:bold;">0</span> FC
                 </div>
             </div>
 
             <div id="operatorBalances"></div>
-            <hr>
 
-            <div id="adminSection" class="hidden">
-                <div class="admin-edit-box">
-                    <h3 style="margin:0 0 10px 0; color:#5b21b6; font-size:16px;">🔧 CONTRÔLE ADMIN</h3>
-                    
-                    <label class="label-sm">Correction Manuelle Cash :</label>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <input type="number" id="fixCaisseUSD" placeholder="Force USD">
-                        <input type="number" id="fixCaisseCDF" placeholder="Force CDF">
-                    </div>
-                    <button style="background:var(--fix)" onclick="fixCaisse()">Ajuster le Tiroir</button>
-
-                    <hr style="margin:10px 0; border:0; border-top:1px solid #ddd;">
-                    
-                    <label class="label-sm">Correction Manuelle SIM :</label>
-                    <select id="fixSimSelect"></select>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <input type="number" id="fixSimUSD" placeholder="Solde USD">
-                        <input type="number" id="fixSimCDF" placeholder="Solde CDF">
-                    </div>
-                    <button style="background:var(--fix)" onclick="fixSim()">Ajuster la SIM</button>
-
-                    <hr style="margin:10px 0; border:0; border-top:1px solid #ddd;">
-                    
-                    <label class="label-sm">📜 Journal des ajustements (Logs) :</label>
-                    <div id="logsList" style="max-height:100px; overflow-y:auto; background:white; padding:5px; border-radius:5px;"></div>
-                </div>
+            <div class="section-title">📱 Mobile Money (Dépôt/Retrait)</div>
+            <div class="grid">
+                <select id="mmOp"></select>
+                <select id="mmType">
+                    <option value="depot">Dépôt (SIM - / Cash +)</option>
+                    <option value="retrait">Retrait (SIM + / Cash -)</option>
+                </select>
             </div>
-        </div>
+            <div class="grid">
+                <input type="number" id="mmAmt" placeholder="Montant">
+                <select id="mmCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select>
+            </div>
+            <button onclick="doMM()" style="background:var(--success)">Valider Mobile Money</button>
 
-        <div id="loginSection" style="padding:40px 0; text-align:center;">
-            <h1>MKA PRO V6.6</h1>
-            <input type="password" id="pinInput" placeholder="Entrez votre code">
-            <button onclick="login()" style="width:100%; padding:15px; background:var(--success)">SE CONNECTER</button>
-            <p style="font-size:11px; color:#94a3b8; margin-top:20px;">Accès restreint par niveau de PIN</p>
+            <div class="section-title">💱 Bureau de Change (Tiroir)</div>
+            <div class="grid">
+                <select id="changeType">
+                    <option value="vendre">Vendre $ (Reçoit FC / Donne $)</option>
+                    <option value="acheter">Acheter $ (Reçoit $ / Donne FC)</option>
+                </select>
+                <input type="number" id="changeTaux" placeholder="Taux appliqué">
+            </div>
+            <input type="number" id="changeAmt" placeholder="Montant en Dollar ($)">
+            <button onclick="doChange()" style="background:var(--warning); color:black;">Valider le Change</button>
+
+            <div class="section-title">📩 Transfert (Envoi/Réception)</div>
+            <div class="grid">
+                <select id="transType">
+                    <option value="envoi">Envoi (Cash +)</option>
+                    <option value="reception">Réception (Cash -)</option>
+                </select>
+                <select id="transCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select>
+            </div>
+            <input type="number" id="transAmt" placeholder="Montant">
+            <button onclick="doTransfer()" style="background:var(--info)">Valider Transfert</button>
+
+            <div id="adminSection" class="hidden admin-panel">
+                <h3 style="margin:0 0 10px 0; color:#5b21b6; font-size:16px;">⚙️ PANNEAU ADMIN</h3>
+                
+                <label style="font-size:11px;">RECHARGE STOCK (DESTINATION) :</label>
+                <select id="rechDest"></select>
+                <div class="grid">
+                    <input type="number" id="rechAmt" placeholder="Montant">
+                    <select id="rechCurr"><option value="USD">USD</option><option value="CDF">CDF</option></select>
+                </div>
+                <select id="rechSource" onchange="toggleRechSim()">
+                    <option value="caisse">Sortir de la Caisse</option>
+                    <option value="sim">Payer avec une autre SIM</option>
+                    <option value="externe">Apport Externe</option>
+                </select>
+                <div id="rechSimBox" class="hidden">
+                    <select id="rechSrcSim"></select>
+                </div>
+                <input type="number" id="rechPrice" placeholder="Taux d'achat du stock">
+                <button onclick="doRecharge()" style="background:#5b21b6">Enregistrer Achat Stock</button>
+
+                <hr>
+                <input type="text" id="newSimName" placeholder="Nom nouvelle SIM">
+                <button onclick="addSim()">+ Créer SIM</button>
+            </div>
         </div>
     </div>
 
@@ -89,70 +121,95 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let data = { caisse: {USD:0, CDF:0}, operators: [], logs: [], tauх: 2850 };
+        let data = { caisse: {USD:0, CDF:0}, operators: [], taux: 2850 };
 
         onValue(ref(db, 'mka_data'), (snap) => {
-            if(snap.val()) {
-                data = snap.val();
-                if(!data.logs) data.logs = [];
-                render();
-            }
+            if(snap.val()) { data = snap.val(); render(); }
         });
 
         const save = () => set(ref(db, 'mka_data'), data);
-        const addLog = (msg) => {
-            data.logs.unshift(`${new Date().toLocaleString()} : ${msg}`);
-            if(data.logs.length > 20) data.logs.pop(); // Garder 20 logs
-        };
 
-        // CONNEXION AVEC LES NOUVEAUX CODES
-        window.login = () => {
-            const pin = document.getElementById("pinInput").value;
-            if(pin === "admin1011") {
+        window.handleLogin = () => {
+            const p = document.getElementById("pinInput").value;
+            if(p === "admin1011") {
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("appSection").classList.remove("hidden");
                 document.getElementById("adminSection").classList.remove("hidden");
-                render();
-            } else if(pin === "1320") {
+            } else if(p === "1320") {
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("appSection").classList.remove("hidden");
-                document.getElementById("adminSection").classList.add("hidden"); // Employé ne voit pas l'admin
-                render();
-            } else {
-                alert("Code incorrect");
-            }
+            } else { alert("Code faux"); }
         };
 
-        window.fixCaisse = () => {
-            const u = document.getElementById("fixCaisseUSD").value;
-            const c = document.getElementById("fixCaisseCDF").value;
-            if(u !== "") { addLog(`Caisse USD forcée à ${u}$`); data.caisse.USD = parseFloat(u); }
-            if(c !== "") { addLog(`Caisse CDF forcée à ${c}FC`); data.caisse.CDF = parseFloat(c); }
-            save(); alert("Ajustement Caisse OK");
+        // LOGIQUE MOBILE MONEY
+        window.doMM = () => {
+            const opI = document.getElementById("mmOp").value;
+            const type = document.getElementById("mmType").value;
+            const amt = parseFloat(document.getElementById("mmAmt").value) || 0;
+            const cur = document.getElementById("mmCurr").value;
+            if(amt <= 0) return;
+            if(type === "depot") { data.caisse[cur] += amt; data.operators[opI][cur] -= amt; }
+            else { data.caisse[cur] -= amt; data.operators[opI][cur] += amt; }
+            save(); alert("MM Terminé");
         };
 
-        window.fixSim = () => {
-            const idx = document.getElementById("fixSimSelect").value;
-            const u = document.getElementById("fixSimUSD").value;
-            const c = document.getElementById("fixSimCDF").value;
-            const op = data.operators[idx];
-            if(u !== "") { addLog(`SIM ${op.name} USD forcée à ${u}$`); op.USD = parseFloat(u); }
-            if(c !== "") { addLog(`SIM ${op.name} CDF forcée à ${c}FC`); op.CDF = parseFloat(c); }
-            save(); alert("Ajustement SIM OK");
+        // LOGIQUE CHANGE
+        window.doChange = () => {
+            const type = document.getElementById("changeType").value;
+            const amtUSD = parseFloat(document.getElementById("changeAmt").value) || 0;
+            const tx = parseFloat(document.getElementById("changeTaux").value) || data.taux;
+            const amtCDF = amtUSD * tx;
+            if(amtUSD <= 0) return;
+            if(type === "vendre") { data.caisse.USD -= amtUSD; data.caisse.CDF += amtCDF; }
+            else { data.caisse.USD += amtUSD; data.caisse.CDF -= amtCDF; }
+            save(); alert("Change Terminé");
+        };
+
+        // LOGIQUE TRANSFERT
+        window.doTransfer = () => {
+            const type = document.getElementById("transType").value;
+            const amt = parseFloat(document.getElementById("transAmt").value) || 0;
+            const cur = document.getElementById("transCurr").value;
+            if(amt <= 0) return;
+            if(type === "envoi") { data.caisse[cur] += amt; }
+            else { data.caisse[cur] -= amt; }
+            save(); alert("Transfert Terminé");
+        };
+
+        window.toggleRechSim = () => {
+            document.getElementById("rechSimBox").classList.toggle("hidden", document.getElementById("rechSource").value !== "sim");
+        };
+
+        window.doRecharge = () => {
+            const dI = document.getElementById("rechDest").value;
+            const amt = parseFloat(document.getElementById("rechAmt").value) || 0;
+            const cur = document.getElementById("rechCurr").value;
+            const src = document.getElementById("rechSource").value;
+            const prc = parseFloat(document.getElementById("rechPrice").value) || data.taux;
+            data.operators[dI][cur] += amt;
+            data.operators[dI].buyPrice = prc;
+            if(src === "caisse") data.caisse[cur] -= amt;
+            if(src === "sim") data.operators[document.getElementById("rechSrcSim").value][cur] -= amt;
+            save(); alert("Stock Rechargé");
+        };
+
+        window.addSim = () => {
+            const n = document.getElementById("newSimName").value;
+            if(n) { data.operators.push({name: n, USD: 0, CDF: 0, buyPrice: data.taux}); save(); }
         };
 
         function render() {
-            if(document.getElementById("appSection").classList.contains("hidden")) return;
+            document.getElementById("displayTaux").innerText = data.taux;
             document.getElementById("caisseUSD").innerText = (data.caisse.USD || 0).toFixed(2);
             document.getElementById("caisseCDF").innerText = (data.caisse.CDF || 0).toLocaleString();
-
-            let vnc = (data.caisse.USD || 0) + ((data.caisse.CDF || 0) / 2850);
-            data.operators.forEach(o => { vnc += (o.USD || 0) + ((o.CDF || 0) / (o.buyPrice || 2850)); });
+            let vnc = (data.caisse.USD || 0) + ((data.caisse.CDF || 0) / data.taux);
+            data.operators.forEach(o => { vnc += (o.USD || 0) + ((o.CDF || 0) / (o.buyPrice || data.taux)); });
             document.getElementById("totalVNC").innerText = vnc.toFixed(2) + " $";
-
-            document.getElementById("fixSimSelect").innerHTML = data.operators.map((o,i) => `<option value="${i}">${o.name}</option>`).join("");
-            document.getElementById("operatorBalances").innerHTML = data.operators.map(o => `<div class="card"><b>${o.name}</b>: ${o.USD}$ | ${o.CDF}FC</div>`).join("");
-            document.getElementById("logsList").innerHTML = data.logs.map(l => `<div class="log-item">${l}</div>`).join("");
+            const opts = data.operators.map((o,i) => `<option value="${i}">${o.name}</option>`).join("");
+            document.getElementById("mmOp").innerHTML = opts;
+            document.getElementById("rechDest").innerHTML = opts;
+            document.getElementById("rechSrcSim").innerHTML = opts;
+            document.getElementById("operatorBalances").innerHTML = data.operators.map(o => `<div class="card"><b>${o.name}</b>: ${o.USD.toFixed(2)}$ | ${o.CDF.toLocaleString()}FC</div>`).join("");
         }
     </script>
 </body>
