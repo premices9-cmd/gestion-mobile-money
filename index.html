@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MKA Pro Business V5.1 - Expert Final</title>
+    <title>MKA Pro Business V5.2 - Expert Final</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; margin: 0; color: white; padding-bottom: 50px; }
         .container { background: white; color: black; margin: 10px; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -21,12 +21,12 @@
         .label-sm { font-size: 11px; font-weight: bold; color: #64748b; margin-top: 5px; display: block; text-transform: uppercase; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .modal-content { background: white; color: black; padding: 20px; border-radius: 15px; width: 95%; max-height: 90vh; overflow-y: auto; }
-        .btn-del { background: #ef4444; padding: 4px 8px; font-size: 10px; width: auto; position: absolute; right: 10px; top: 10px; }
+        .btn-del { background: #ef4444; padding: 4px 8px; font-size: 10px; width: auto; position: absolute; right: 10px; top: 10px; color: white; }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; padding: 10px;">MKA Pro V5.1 Expert</h1>
+    <h1 style="text-align:center; padding: 10px;">MKA Pro V5.2 Expert</h1>
 
     <div class="container">
         <div id="loginSection">
@@ -80,7 +80,7 @@
             </div>
 
             <div id="mixedFields" class="mixed-box hidden">
-                <label class="label-sm">Répartition Cash Mixtes :</label>
+                <label class="label-sm">Répartition Cash & Frais Mixtes :</label>
                 <div class="grid-2">
                     <input type="number" id="mixUSD" placeholder="Reçu/Rendu $">
                     <div style="display:flex; gap:2px;">
@@ -88,7 +88,10 @@
                         <button onclick="autoCalcMix()" style="width:45px; background:#16a34a; font-size:10px;">CALC</button>
                     </div>
                 </div>
-                <input type="number" id="commVirtuel" value="0" placeholder="+ Frais Rareté Virtuel ($)">
+                <div class="grid-2" style="margin-top:5px;">
+                    <input type="number" id="commUSD" placeholder="+ Frais ($)">
+                    <input type="number" id="commCDF" placeholder="+ Frais (FC)">
+                </div>
             </div>
 
             <label class="label-sm">Mode de Règlement :</label>
@@ -180,8 +183,13 @@
         const db = getDatabase(app);
         let data = { caisse:{USD:0, CDF:0}, operators:[], types:[], transactions:[], taux:2800 };
 
-        onValue(ref(db, 'mka_data'), (snap) => { if(snap.val()) { data = snap.val(); render(); } });
+        onValue(ref(db, 'mka_data'), (snap) => { if(snap.val()) { data = snap.val(); if(!data.transactions) data.transactions = []; render(); } });
         const save = () => set(ref(db, 'mka_data'), data);
+
+        // FORMATAGE DES CHIFFRES AVEC ESPACE (1 000 000)
+        const fmt = (n) => {
+            return parseFloat(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, '.');
+        };
 
         window.login = () => {
             const p = document.getElementById("pinInput").value;
@@ -225,31 +233,30 @@
             const mode = document.getElementById("payMode").value, motif = document.getElementById("motif").value;
             const ty = data.types[tyI], op = data.operators[opI];
 
-            // 1. IMPACT SIM
             op[cur] = (parseFloat(op[cur]) || 0) + (amt * parseInt(ty.impO));
             
-            // 2. IMPACT STOCK (Auto + Manuel)
             let stkB = parseInt(ty.impS) || 0;
             let manualStock = prompt("Mouvement manuel de cartes SIM (ex: -1, +5) ? Laissez 0 sinon.", "0");
             stkB += parseInt(manualStock) || 0;
             op.stock = (parseInt(op.stock) || 0) + stkB;
 
-            // 3. LOGIQUE CAISSE / MIXTE / RÈGLEMENT
             const isMixed = !document.getElementById("mixedFields").classList.contains("hidden");
-            const commV = parseFloat(document.getElementById("commVirtuel").value) || 0;
+            const cUSD = parseFloat(document.getElementById("commUSD").value) || 0;
+            const cCDF = parseFloat(document.getElementById("commCDF").value) || 0;
 
             if(isMixed && mode === "cash") {
                 const mUSD = parseFloat(document.getElementById("mixUSD").value) || 0;
                 const mCDF = parseFloat(document.getElementById("mixCDF").value) || 0;
                 if(ty.name.toLowerCase().includes("dépôt")) {
-                    data.caisse.USD += (mUSD + commV); data.caisse.CDF += mCDF;
+                    data.caisse.USD += (mUSD + cUSD); data.caisse.CDF += (mCDF + cCDF);
                 } else {
-                    data.caisse.USD -= mUSD; data.caisse.CDF -= mCDF; data.caisse.USD += commV;
+                    data.caisse.USD -= mUSD; data.caisse.CDF -= mCDF; 
+                    data.caisse.USD += cUSD; data.caisse.CDF += cCDF;
                 }
             } else {
                 if(mode === "cash") {
                     data.caisse[cur] = (parseFloat(data.caisse[cur]) || 0) + (amt * parseInt(ty.impC));
-                    data.caisse.USD += commV;
+                    data.caisse.USD += cUSD; data.caisse.CDF += cCDF;
                 } else if(mode === "virtuel") {
                     const pIdx = document.getElementById("paySimSelect").value;
                     data.operators[pIdx][cur] = (parseFloat(data.operators[pIdx][cur]) || 0) + (amt * parseInt(ty.impC));
@@ -267,7 +274,31 @@
 
             data.transactions.unshift({ date: new Date().toLocaleString(), desc: `${ty.name} (${motif})`, amt, cur });
             save(); alert("Transaction enregistrée !");
+            // Reset fields
+            document.getElementById("commUSD").value = ""; document.getElementById("commCDF").value = "";
         };
+
+        window.delTransaction = (i) => {
+            if(confirm("Supprimer définitivement cette transaction ?")) {
+                data.transactions.splice(i, 1);
+                save();
+                showFullHistory();
+            }
+        };
+
+        window.showFullHistory = () => { 
+            const isAdmin = !document.getElementById("adminSection").classList.contains("hidden");
+            document.getElementById("fullHistoryList").innerHTML = data.transactions.map((t,i) => `
+                <div class="card">
+                    ${isAdmin ? `<button class="btn-del" onclick="delTransaction(${i})">SUPPR</button>` : ''}
+                    <b>${t.date}</b>: ${t.desc}<br>
+                    <strong>${fmt(t.amt)} ${t.cur}</strong>
+                </div>
+            `).join(""); 
+            document.getElementById("historyModal").classList.remove("hidden"); 
+        };
+
+        window.closeHistory = () => document.getElementById("historyModal").classList.add("hidden");
 
         window.updateAdminBasics = () => {
             data.taux = parseFloat(document.getElementById("newTaux").value) || data.taux;
@@ -318,16 +349,11 @@
             document.getElementById("mixedFields").classList.toggle("hidden", !isM);
         };
         window.togglePaySim = () => document.getElementById("paySimBox").classList.toggle("hidden", document.getElementById("payMode").value !== "virtuel");
-        window.showFullHistory = () => { 
-            document.getElementById("fullHistoryList").innerHTML = data.transactions.map(t => `<div class="card"><b>${t.date}</b>: ${t.desc} (<b>${t.amt}${t.cur}</b>)</div>`).join(""); 
-            document.getElementById("historyModal").classList.remove("hidden"); 
-        };
-        window.closeHistory = () => document.getElementById("historyModal").classList.add("hidden");
 
         function render() {
             const tCDF = parseFloat(data.taux) || 1;
-            document.getElementById("caisseUSD").innerText = (parseFloat(data.caisse.USD) || 0).toLocaleString();
-            document.getElementById("caisseCDF").innerText = (parseFloat(data.caisse.CDF) || 0).toLocaleString();
+            document.getElementById("caisseUSD").innerText = fmt(data.caisse.USD);
+            document.getElementById("caisseCDF").innerText = fmt(data.caisse.CDF);
             document.getElementById("rateM").innerText = tCDF;
 
             let vnc = (parseFloat(data.caisse.USD) || 0) + ((parseFloat(data.caisse.CDF) || 0) / tCDF);
@@ -340,7 +366,6 @@
                 const px = parseFloat(o.prixAchat) || 0;
                 const lowerName = o.name.toLowerCase();
 
-                // Gestion Intelligente VNC (Actifs / Passifs)
                 if(lowerName.includes("dette moi") || lowerName.includes("dépense")) {
                     vnc -= (usd + (cdf / tCDF));
                 } else {
@@ -348,12 +373,12 @@
                 }
 
                 totalS += stk;
-                opCards += `<div class="card"><b>${o.name}</b>: ${usd}$ | ${cdf}FC<br><small>Stock: ${stk} cartes</small></div>`;
+                opCards += `<div class="card"><b>${o.name}</b>: ${fmt(usd)}$ | ${fmt(cdf)}FC<br><small>Stock: ${stk} cartes</small></div>`;
                 opList += `<option value="${i}">${o.name}</option>`;
                 adminOpList += `<div class="card">${o.name} <button class="btn-del" onclick="delOp(${i})">SUPPR</button> <button onclick="quickEditOp(${i})" style="width:auto; padding:2px 8px; font-size:10px; background:#0ea5e9;">EDIT</button></div>`;
             });
 
-            document.getElementById("totalVNC").innerText = vnc.toFixed(2) + " $";
+            document.getElementById("totalVNC").innerText = fmt(vnc) + " $";
             document.getElementById("totalStock").innerText = totalS;
             document.getElementById("operatorBalances").innerHTML = opCards;
             document.getElementById("srcWallet").innerHTML = '<option value="caisse">Caisse Centrale</option>' + opList;
@@ -367,3 +392,4 @@
     </script>
 </body>
 </html>
+
