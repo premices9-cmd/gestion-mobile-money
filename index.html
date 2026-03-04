@@ -67,7 +67,7 @@
                     <input type="number" id="destAmt" readonly style="background:#e2e8f0; font-weight:bold">
                     <select id="destCurr" onchange="calcDest()"><option value="CDF">CDF</option><option value="USD">USD</option></select>
                 </div>
-                <input type="text" id="transferMotif" placeholder="Motif (ex: Approvisionnement)">
+                <input type="text" id="transferMotif" placeholder="Motif">
                 <button onclick="executeGlobalChange()" style="background:#0ea5e9; width:100%;">VALIDER TRANSFERT</button>
             </div>
 
@@ -106,7 +106,10 @@
                 <option value="dette_client">Dette Client (Sortie non payée)</option>
                 <option value="dette_moi">Dette Moi (Entrée non payée)</option>
             </select>
-            <div id="paySimBox" class="hidden"><select id="paySimSelect"></select></div>
+            <div id="paySimBox" class="hidden" style="margin-top:5px;">
+                <label class="label-sm" style="color:#8b5cf6;">Choisir la SIM source :</label>
+                <select id="paySimSelect" style="border: 2px solid #8b5cf6;"></select>
+            </div>
             
             <input type="text" id="motif" placeholder="Référence / Client">
             <button onclick="addTransaction()" style="background:#16a34a; margin-top:10px;">ENREGISTRER L'OPÉRATION</button>
@@ -178,7 +181,7 @@
     <div id="historyModal" class="modal hidden">
         <div class="modal-content">
             <button onclick="closeHistory()" style="background:#ef4444; float:right;">X</button>
-            <button onclick="exportHistory()" style="background:#16a34a; float:left; width:auto; padding:8px 15px;">TÉLÉCHARGER</button>
+            <button onclick="exportHistory()" style="background:#16a34a; float:left; width:auto; padding:8px 15px;">TXT</button>
             <div style="clear:both;"></div>
             <h2 style="text-align:center">Historique</h2>
             <div id="fullHistoryList"></div>
@@ -205,6 +208,7 @@
                 data = snap.val(); 
                 if(!data.transactions) data.transactions = []; 
                 if(!data.types) data.types = []; 
+                if(!data.operators) data.operators = [];
                 render(); 
             } 
         });
@@ -222,6 +226,13 @@
         };
 
         window.logout = () => location.reload();
+
+        window.togglePaySim = () => {
+            const mode = document.getElementById("payMode").value;
+            const box = document.getElementById("paySimBox");
+            if(mode === "virtuel") { box.classList.remove("hidden"); } 
+            else { box.classList.add("hidden"); }
+        };
 
         window.calcDest = () => {
             const amt = parseFloat(document.getElementById("srcAmt").value) || 0;
@@ -242,9 +253,7 @@
         window.updateDefaultStockMove = () => {
             const tyI = document.getElementById("typeSelect").value;
             const ty = data.types[tyI];
-            if(ty) {
-                document.getElementById("stkMove").value = ty.impS || 0;
-            }
+            if(ty) document.getElementById("stkMove").value = ty.impS || 0;
         };
 
         window.addTransaction = () => {
@@ -253,42 +262,58 @@
             const mode = document.getElementById("payMode").value, motif = document.getElementById("motif").value;
             const ty = data.types[tyI], op = data.operators[opI];
             
-            if(!amt || !ty || !op) { alert("Saisie invalide"); return; }
+            if(!amt || !ty || !op) { alert("Vérifiez le montant, le type et l'opérateur"); return; }
 
+            // 1. IMPACT SIM SÉLECTIONNÉE
             op[cur] = (parseFloat(op[cur]) || 0) + (amt * parseInt(ty.impO));
             op.stock = (parseInt(op.stock) || 0) + (parseInt(document.getElementById("stkMove").value) || 0);
 
+            // Commissions (Toujours ajoutées à la caisse)
             const cUSD = parseFloat(document.getElementById("commUSD").value) || 0;
             const cCDF = parseFloat(document.getElementById("commCDF").value) || 0;
 
+            // 2. LOGIQUE DE RÈGLEMENT
             if(mode === "cash") {
                 const mUSD = parseFloat(document.getElementById("mixUSD").value) || 0, mCDF = parseFloat(document.getElementById("mixCDF").value) || 0;
                 if(mUSD > 0 || mCDF > 0) {
-                    if(ty.impC > 0) { data.caisse.USD += (mUSD + cUSD); data.caisse.CDF += (mCDF + cCDF); }
-                    else { data.caisse.USD -= mUSD; data.caisse.CDF -= mCDF; data.caisse.USD += cUSD; data.caisse.CDF += cCDF; }
+                    let impact = parseInt(ty.impC);
+                    data.caisse.USD += (mUSD * impact) + cUSD; 
+                    data.caisse.CDF += (mCDF * impact) + cCDF; 
                 } else {
                     data.caisse[cur] = (parseFloat(data.caisse[cur]) || 0) + (amt * parseInt(ty.impC));
                     data.caisse.USD += cUSD; data.caisse.CDF += cCDF;
                 }
-            } else if(mode === "virtuel") {
+            } 
+            else if(mode === "virtuel") {
                 const pIdx = document.getElementById("paySimSelect").value;
-                data.operators[pIdx][cur] = (parseFloat(data.operators[pIdx][cur]) || 0) - (amt * Math.abs(parseInt(ty.impC)));
+                data.operators[pIdx][cur] = (parseFloat(data.operators[pIdx][cur]) || 0) - amt;
                 data.caisse.USD += cUSD; data.caisse.CDF += cCDF;
-            } else {
+            } 
+            else {
+                // LOGIQUE DETTES / DÉPENSES : ON UTILISE MATH.ABS POUR TOUJOURS AUGMENTER
                 let targetName = mode.replace("_", " ");
                 let d = data.operators.find(o => o.name.toLowerCase().includes(targetName)); 
-                if(d) { d[cur] = (parseFloat(d[cur]) || 0) + (amt * Math.abs(parseInt(ty.impC))); data.caisse.USD += cUSD; data.caisse.CDF += cCDF; }
+                if(d) {
+                    d[cur] = (parseFloat(d[cur]) || 0) + Math.abs(amt); 
+                    data.caisse.USD += cUSD; data.caisse.CDF += cCDF;
+                } else {
+                    alert("Erreur: Créer d'abord un compte nommé '" + targetName.toUpperCase() + "' dans l'admin.");
+                    return;
+                }
             }
+
             data.transactions.unshift({ date: new Date().toLocaleString(), desc: `${ty.name} - ${op.name} (${motif})`, amt, cur });
-            save(); alert("Enregistré !");
-            ["amount", "stkMove", "mixUSD", "mixCDF", "commUSD", "commCDF", "motif"].forEach(id => document.getElementById(id).value = id==="stkMove"?"0":"");
+            save(); alert("Enregistré avec succès !");
+            ["amount", "stkMove", "mixUSD", "mixCDF", "commUSD", "commCDF", "motif"].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.value = (id==="stkMove"?"0":"");
+            });
         };
 
         window.deleteTransaction = (idx) => {
             if(confirm("Supprimer cette transaction ?")) {
                 data.transactions.splice(idx, 1);
-                save();
-                window.showFullHistory();
+                save(); window.showFullHistory();
             }
         };
 
@@ -304,12 +329,12 @@
         };
 
         window.exportHistory = () => {
-            let content = "HISTORIQUE MKA PRO BUSINESS\n" + "=".repeat(30) + "\n\n";
+            let content = "HISTORIQUE MKA PRO\n\n";
             data.transactions.forEach(t => { content += `${t.date} | ${t.desc} | ${fmt(t.amt)} ${t.cur}\n`; });
             const blob = new Blob([content], { type: "text/plain" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `MKA_Export_${new Date().toLocaleDateString()}.txt`;
+            link.download = `MKA_History.txt`;
             link.click();
         };
 
@@ -321,7 +346,7 @@
             if(low.includes("dépense") || low.includes("dette moi")) { data.caisse[cur] -= amt; op[cur] -= amt; }
             else if(low.includes("dette client")) { data.caisse[cur] += amt; op[cur] -= amt; }
             data.transactions.unshift({ date: new Date().toLocaleString(), desc: `SOLDER: ${op.name}`, amt, cur });
-            save();
+            save(); alert("Compte soldé vers la caisse");
         };
 
         window.executeGlobalChange = () => {
@@ -332,7 +357,7 @@
             if(sIdx === "caisse") data.caisse[sc] -= sAmt; else data.operators[sIdx][sc] -= sAmt;
             if(dIdx === "caisse") data.caisse[dc] += dAmt; else data.operators[dIdx][dc] += dAmt;
             data.transactions.unshift({ date: new Date().toLocaleString(), desc: `TRANSFERT INTERNE`, amt: sAmt, cur: sc });
-            save();
+            save(); alert("Transfert effectué");
         };
 
         window.updateAdminBasics = () => {
@@ -340,26 +365,24 @@
             if(tX !== "") data.taux = parseFloat(tX);
             if(uX !== "") data.caisse.USD = parseFloat(uX);
             if(cX !== "") data.caisse.CDF = parseFloat(cX);
-            save(); alert("Caisse mise à jour !");
+            save(); alert("Paramètres mis à jour");
         };
 
         window.addOperator = () => {
-            const op = { name: document.getElementById("newOpName").value, USD: parseFloat(document.getElementById("initUSD").value) || 0, CDF: parseFloat(document.getElementById("initCDF").value) || 0, stock: parseInt(document.getElementById("initStock").value) || 0, prixAchat: parseFloat(document.getElementById("initPrice").value) || 0 };
+            const op = { 
+                name: document.getElementById("newOpName").value, 
+                USD: parseFloat(document.getElementById("initUSD").value) || 0, 
+                CDF: parseFloat(document.getElementById("initCDF").value) || 0, 
+                stock: parseInt(document.getElementById("initStock").value) || 0, 
+                prixAchat: parseFloat(document.getElementById("initPrice").value) || 0 
+            };
             if(op.name) { data.operators.push(op); save(); }
         };
 
         window.addType = () => {
             const name = document.getElementById("newTypeName").value;
-            if(name) { 
-                data.types.push({ 
-                    name: name, 
-                    impO: parseInt(document.getElementById("impO").value), 
-                    impC: parseInt(document.getElementById("impC").value), 
-                    impS: parseInt(document.getElementById("impS").value) 
-                }); 
-                save(); 
-                document.getElementById("newTypeName").value = "";
-            }
+            const impO = parseInt(document.getElementById("impO").value), impC = parseInt(document.getElementById("impC").value), impS = parseInt(document.getElementById("impS").value);
+            if(name) { data.types.push({ name, impO, impC, impS }); save(); alert("Type créé"); }
         };
 
         window.deleteType = (i) => { if(confirm("Supprimer ce type ?")) { data.types.splice(i, 1); save(); } };
@@ -383,13 +406,13 @@
             document.getElementById("operatorBalances").innerHTML = data.operators.map((o, i) => {
                 const usd = parseFloat(o.USD) || 0, cdf = parseFloat(o.CDF) || 0, stk = parseInt(o.stock) || 0, px = parseFloat(o.prixAchat) || 0;
                 const low = o.name.toLowerCase(), val = usd + (cdf / t);
-                let isNegative = false;
+                let isNeg = false;
                 if(low.includes("dette") || low.includes("dépense")) {
-                    isNegative = true;
+                    isNeg = true;
                     if(low.includes("client")) detteClient += val; else passif += val;
                 } else { totalSims += (val + (stk * px)); }
                 totalS += stk;
-                return `<div class="card ${isNegative ? 'negative' : ''}"><b>${o.name}</b>: ${fmt(o.USD)}$ | ${fmt(o.CDF)}FC<br><small>Stock: ${o.stock} SIM</small></div>`;
+                return `<div class="card ${isNeg ? 'negative' : ''}"><b>${o.name}</b>: ${fmt(o.USD)}$ | ${fmt(o.CDF)}FC<br><small>Stock: ${o.stock} SIM</small></div>`;
             }).join("");
 
             document.getElementById("totalVNC").innerText = fmt(totalCaisse + totalSims + detteClient - passif) + " $";
@@ -403,7 +426,7 @@
             document.getElementById("settleOpIdx").innerHTML = opOps;
             document.getElementById("adminOpEditList").innerHTML = data.operators.map((o,i) => `<div class="card">${o.name} <button class="btn-del" onclick="data.operators.splice(${i},1); save();">X</button> <button onclick="quickEditOp(${i})" style="width:auto; padding:2px 8px; font-size:10px; background:#0ea5e9;">EDIT</button></div>`).join("");
             document.getElementById("typeSelect").innerHTML = data.types.map((t,i) => `<option value="${i}">${t.name}</option>`).join("");
-            document.getElementById("adminTypeList").innerHTML = data.types.map((t,i) => `<div class="card" style="margin:2px 0; padding:5px; background:white;">${t.name} (Stock: ${t.impS}) <button onclick="window.deleteType(${i})" style="width:auto; padding:2px 8px; background:#ef4444; float:right; font-size:10px; color:white;">SUPPR</button><div style="clear:both;"></div></div>`).join("");
+            document.getElementById("adminTypeList").innerHTML = data.types.map((t,i) => `<div class="card" style="margin:2px 0; padding:5px; background:white;">${t.name} (SIM:${t.impO} CAI:${t.impC} STK:${t.impS}) <button onclick="window.deleteType(${i})" style="width:auto; padding:2px 8px; background:#ef4444; float:right; font-size:10px; color:white;">SUPPR</button><div style="clear:both;"></div></div>`).join("");
         }
     </script>
 </body>
