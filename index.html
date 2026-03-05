@@ -117,7 +117,6 @@
             <div id="adminSection" class="hidden">
                 <div class="admin-box">
                     <h3>🔧 Configuration Admin</h3>
-                    
                     <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; color:black;">
                         <h4>Créer Type d'Action</h4>
                         <input type="text" id="newTypeName" placeholder="Nom (ex: Vente SIM)">
@@ -216,6 +215,7 @@
         const fmt = (n) => parseFloat(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace(/,/g, '.');
         const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
+        // Fonctions Globales
         window.login = () => {
             const p = document.getElementById("pinInput").value;
             if(p === "1234" || p === "0000") {
@@ -420,26 +420,30 @@
                 const val = usd + (cdf / t);
                 let isNeg = false;
                 
-                // --- CORRECTION LOGIQUE VNC ---
-                if(n.includes("dette moi") || n.includes("depense")) {
+                // --- LOGIQUE CORRIGÉE : ÉVITER LE DOUBLON ---
+                if(n.includes("dette moi")) {
                     isNeg = true;
-                    passif += val; // On isole les dépenses et dettes passives
+                    passif += val; // On soustrait la dette car l'argent n'est pas encore sorti de caisse
                 } 
+                else if(n.includes("depense")) {
+                    isNeg = true;
+                    // IMPORTANT: On ne soustrait PAS "val" ici, car l'argent est DÉJÀ sorti de la caisse
+                    // au moment de l'enregistrement de l'opération. 
+                }
                 else if(n.includes("dette client")) {
                     isNeg = true;
-                    detteClient += val; // Dette active (argent dehors)
+                    detteClient += val; // Argent dehors à récupérer
                 } 
                 else { 
-                    // Valeur réelle des SIMs + Argent sur les cartes
                     totalSims += (val + (stk * px)); 
                 }
-                // ------------------------------
                 
                 totalS += stk;
                 return `<div class="card ${isNeg ? 'negative' : ''}"><b>${o.name}</b>: ${fmt(o.USD)}$ | ${fmt(o.CDF)}FC<br><small>Stock: ${o.stock} SIM</small></div>`;
             }).join("");
 
-            // FORMULE CORRIGÉE : Caisse + Argent SIMs + Dettes Clients - Dettes/Dépenses
+            // VNC = (Argent en caisse + Argent en SIM + Dettes clients) - Dettes à payer
+            // Les dépenses sont déjà sorties de totalCaisse, donc inutile de les soustraire à nouveau.
             document.getElementById("totalVNC").innerText = fmt(totalCaisse + totalSims + detteClient - passif) + " $";
             document.getElementById("totalStock").innerText = totalS;
             
@@ -467,4 +471,3 @@
     </script>
 </body>
 </html>
-
